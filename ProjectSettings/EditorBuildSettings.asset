@@ -6,10 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/mainmenu.unity
+    path: Assets/Scenes/Game UI/mainmenu.unity
     guid: 6debe7b4a7958864285df95018d8a4aa
   - enabled: 1
-    path: Assets/Scenes/prototype_speedrun_1.unity
+    path: Assets/Scenes/Demo Scenes/basic_environment.unity
     guid: 1dcba781ebca3584eb3a551f335e7d44
   - enabled: 1
     path: Assets/Scenes/prototype_speedrun.unity
