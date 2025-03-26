@@ -18,14 +18,24 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Enemy")) 
+        HealthSystem targetHealth = other.GetComponent<HealthSystem>();
+        if (targetHealth != null)
         {
-            HealthSystem enemyHealth = other.GetComponent<HealthSystem>();
-            if (enemyHealth != null)
+            // Prevent friendly fire by checking tag difference
+            bool isPlayerShooting = gameObject.CompareTag("PlayerProjectile");
+            bool isEnemyShooting = gameObject.CompareTag("EnemyProjectile");
+
+            if (isPlayerShooting && other.CompareTag("Enemy"))
             {
-                enemyHealth.TakeDamage(damage);
+                targetHealth.TakeDamage(damage);
+                Destroy(gameObject);
             }
-            Destroy(gameObject); // Destroy projectile on impact
+            else if (isEnemyShooting && other.CompareTag("Player"))
+            {
+                targetHealth.TakeDamage(damage);
+                Destroy(gameObject);
+            }
         }
     }
+
 }

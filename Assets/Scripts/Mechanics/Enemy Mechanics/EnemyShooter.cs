@@ -7,10 +7,16 @@ public class EnemyShooter : MonoBehaviour
     public float shootInterval = 2f;
 
     private float nextShootTime = 0f;
+    private Transform player;
+
+    void Start()
+    {
+        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+    }
 
     void Update()
     {
-        if (!SimpleQuestManager.Instance.missionAccepted) return;
+        if (!SimpleQuestManager.Instance.missionAccepted || player == null) return;
 
         if (Time.time >= nextShootTime)
         {
@@ -23,7 +29,11 @@ public class EnemyShooter : MonoBehaviour
     {
         if (projectilePrefab != null && firePoint != null)
         {
-            Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
+            // Look at the player
+            Vector3 direction = (player.position - firePoint.position).normalized;
+            Quaternion lookRotation = Quaternion.LookRotation(direction);
+            GameObject proj = Instantiate(projectilePrefab, firePoint.position, lookRotation);
+            proj.tag = "EnemyProjectile";
         }
     }
 }

@@ -16,7 +16,7 @@ public class DolphinShooting : MonoBehaviour
 
     void HandleShooting()
     {
-        if (Input.GetMouseButtonDown(1) && Time.time >= nextFireTime) // Left-click
+        if (Input.GetMouseButtonDown(1) && Time.time >= nextFireTime) // Right-click
         {
             Shoot();
             nextFireTime = Time.time + fireRate;
@@ -27,7 +27,8 @@ public class DolphinShooting : MonoBehaviour
     {
         if (projectilePrefab != null && firePoint != null)
         {
-            Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
+            GameObject proj = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
+            proj.tag = "PlayerProjectile";
         }
         else
         {
