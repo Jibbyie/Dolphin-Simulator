@@ -47,7 +47,7 @@ public class CubeInteraction : MonoBehaviour
         if (questFloatingText != null)
         {
             questFloatingText.gameObject.SetActive(true);
-            questFloatingText.text = "Yo! Come over here you bum!";
+            questFloatingText.text = "Yo! Wanna make some quick pearls?";
         }
 
         BuildDialogueTree();
@@ -115,9 +115,13 @@ public class CubeInteraction : MonoBehaviour
         {
             dialogueUI.SetActive(false);
 
+            // Show floating text again only if mission wasn't accepted or declined
             if (!SimpleQuestManager.Instance.missionAccepted && !missionDeclined && questFloatingText != null)
+            {
                 questFloatingText.gameObject.SetActive(true);
+            }
         }
+
     }
 
     public void OnEnemyDefeated()
@@ -287,33 +291,33 @@ public class CubeInteraction : MonoBehaviour
     void BuildDialogueTree()
     {
         // Final mission dialogue
-        DialogueNode missionNode = new DialogueNode("So... there's a rogue cube out there flexin' like he owns the reef. Bring back his pearl chain.");
+        DialogueNode missionNode = new DialogueNode("I got a bounty for you... 100 pearls and some Aura. There's a rogue dolphin stirrin' up trouble near the coral ridge.");
         missionNode.onSelected = ShowMissionOptions;
 
-        // Extra joke node (deflection)
-        DialogueNode deflectNode = new DialogueNode("Don't play dumb. You floatin’ around lookin’ unemployed.");
-        deflectNode.options.Add(new DialogueOption { text = "Alright, damn.", nextNode = missionNode });
-        deflectNode.options.Add(new DialogueOption { text = "Okay fine, continue", nextNode = missionNode });
-
         // Extra lore/weirdness node
-        DialogueNode weirdLoreNode = new DialogueNode("Ever since that cube showed up, the reef’s been... off. Fish be twitchin', coral turned neon.");
-        weirdLoreNode.options.Add(new DialogueOption { text = "That's messed up..", nextNode = missionNode });
-        weirdLoreNode.options.Add(new DialogueOption { text = "Let me handle it", nextNode = missionNode });
+        DialogueNode weirdLoreNode = new DialogueNode("Ever since that outlaw showed up, reef’s been twitchin’. Fish whisper his name like a ghost.");
+        weirdLoreNode.options.Add(new DialogueOption { text = "Sounds serious.", nextNode = missionNode });
+        weirdLoreNode.options.Add(new DialogueOption { text = "I'm listening...", nextNode = missionNode });
+
+        // Extra joke/attitude deflection
+        DialogueNode deflectNode = new DialogueNode("Don’t act clueless. You out here floatin’ like you got no direction.");
+        deflectNode.options.Add(new DialogueOption { text = "Fair enough.", nextNode = missionNode });
+        deflectNode.options.Add(new DialogueOption { text = "Alright, hit me with it.", nextNode = missionNode });
 
         // Deep insult comeback
-        DialogueNode insultReply = new DialogueNode("You. Definitely you.");
-        insultReply.options.Add(new DialogueOption { text = "Watch it.", nextNode = deflectNode });
+        DialogueNode insultReply = new DialogueNode("You, driftin’ around like a lost sardine.");
+        insultReply.options.Add(new DialogueOption { text = "Watch your tone.", nextNode = deflectNode });
         insultReply.options.Add(new DialogueOption { text = "Whatever, talk.", nextNode = weirdLoreNode });
 
-        // Side tangent before mission
-        DialogueNode sideTrack = new DialogueNode("What I want is... complicated. But mostly I want that cube gone.");
-        sideTrack.options.Add(new DialogueOption { text = "Explain.", nextNode = weirdLoreNode });
-        sideTrack.options.Add(new DialogueOption { text = "Just gimme the job.", nextNode = missionNode });
+        // Side tangent
+        DialogueNode sideTrack = new DialogueNode("What I want? Justice. Respect. Pearls. But mostly that fool gone.");
+        sideTrack.options.Add(new DialogueOption { text = "That all?", nextNode = weirdLoreNode });
+        sideTrack.options.Add(new DialogueOption { text = "Let’s skip to the bounty.", nextNode = missionNode });
 
         // Root node: first interaction
-        rootNode = new DialogueNode("Yo! Come over here, you underwater bum.");
-        rootNode.options.Add(new DialogueOption { text = "Who you calling bum?", nextNode = insultReply });
-        rootNode.options.Add(new DialogueOption { text = "What do you want foo?", nextNode = sideTrack });
+        rootNode = new DialogueNode("You lookin’ for pearls, huh? Got a job, if you got the gills for it.");
+        rootNode.options.Add(new DialogueOption { text = "Who you calling gilled?", nextNode = insultReply });
+        rootNode.options.Add(new DialogueOption { text = "You got work?", nextNode = sideTrack });
     }
 
 
@@ -349,8 +353,9 @@ public class CubeInteraction : MonoBehaviour
     void ShowMissionOptions()
     {
         missionGiven = true;
-        dialogueText.text = "So... there's a rogue cube out there flexin' like he owns the reef.";
-        missionText.text = "Take him out, and bring me back his pearl chain.";
+        dialogueText.text = "So... there's a rogue dolphin out there actin' wild. Name's Dilly The Kid. Real slippery.";
+        missionText.text = "Take him out, bring back his pearl chain, and you'll earn 100 pearls and some serious Aura.";
+
 
         acceptButton.gameObject.SetActive(true);
         declineButton.gameObject.SetActive(true);
