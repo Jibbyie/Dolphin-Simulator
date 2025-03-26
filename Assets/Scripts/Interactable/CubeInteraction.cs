@@ -217,19 +217,36 @@ public class CubeInteraction : MonoBehaviour
     void BuildDialogueTree()
     {
         // Final mission dialogue
-        DialogueNode missionNode = new DialogueNode("Yo. I got a job for you...");
+        DialogueNode missionNode = new DialogueNode("So... there's a rogue cube out there flexin' like he owns the reef. Bring back his pearl chain.");
         missionNode.onSelected = ShowMissionOptions;
 
-        // "You, bum." branch
-        DialogueNode bumReply = new DialogueNode("You, bum.");
-        bumReply.options.Add(new DialogueOption { text = "Watch who you're talking to", nextNode = missionNode });
-        bumReply.options.Add(new DialogueOption { text = "Man, what you want", nextNode = missionNode });
+        // Extra joke node (deflection)
+        DialogueNode deflectNode = new DialogueNode("Don't play dumb. You floatin’ around lookin’ unemployed.");
+        deflectNode.options.Add(new DialogueOption { text = "Alright, damn.", nextNode = missionNode });
+        deflectNode.options.Add(new DialogueOption { text = "Okay fine, continue", nextNode = missionNode });
 
-        // Root interaction
-        rootNode = new DialogueNode("Yo! Come over here you bum!");
-        rootNode.options.Add(new DialogueOption { text = "Who you calling a bum?", nextNode = bumReply });
-        rootNode.options.Add(new DialogueOption { text = "What you want foo?", nextNode = missionNode });
+        // Extra lore/weirdness node
+        DialogueNode weirdLoreNode = new DialogueNode("Ever since that cube showed up, the reef’s been... off. Fish be twitchin', coral turned neon.");
+        weirdLoreNode.options.Add(new DialogueOption { text = "That's messed up..", nextNode = missionNode });
+        weirdLoreNode.options.Add(new DialogueOption { text = "Let me handle it", nextNode = missionNode });
+
+        // Deep insult comeback
+        DialogueNode insultReply = new DialogueNode("You. Definitely you.");
+        insultReply.options.Add(new DialogueOption { text = "Watch it.", nextNode = deflectNode });
+        insultReply.options.Add(new DialogueOption { text = "Whatever, talk.", nextNode = weirdLoreNode });
+
+        // Side tangent before mission
+        DialogueNode sideTrack = new DialogueNode("What I want is... complicated. But mostly I want that cube gone.");
+        sideTrack.options.Add(new DialogueOption { text = "Explain.", nextNode = weirdLoreNode });
+        sideTrack.options.Add(new DialogueOption { text = "Just gimme the job.", nextNode = missionNode });
+
+        // Root node: first interaction
+        rootNode = new DialogueNode("Yo! Come over here, you underwater bum.");
+        rootNode.options.Add(new DialogueOption { text = "Who you calling bum?", nextNode = insultReply });
+        rootNode.options.Add(new DialogueOption { text = "What do you want foo?", nextNode = sideTrack });
     }
+
+
 
     void ShowNode(DialogueNode node)
     {
@@ -262,14 +279,14 @@ public class CubeInteraction : MonoBehaviour
     void ShowMissionOptions()
     {
         missionGiven = true;
-        dialogueText.text = "Yo. I got a job for you...";
-        missionText.text = "Take down that rogue red cube. He's been wildin'. Bring back his pearl chain.";
+        dialogueText.text = "So... there's a rogue cube out there flexin' like he owns the reef.";
+        missionText.text = "Take him out, and bring me back his pearl chain.";
 
         acceptButton.gameObject.SetActive(true);
         declineButton.gameObject.SetActive(true);
 
         acceptButton.GetComponentInChildren<TMP_Text>().text = "<color=green>Bet, I'm on it</color>";
-        declineButton.GetComponentInChildren<TMP_Text>().text = "<color=red>Nah, I'm good</color>";
+        declineButton.GetComponentInChildren<TMP_Text>().text = "<color=red>Nah cuzz, I'm good</color>";
 
         acceptButton.onClick.RemoveAllListeners();
         declineButton.onClick.RemoveAllListeners();
