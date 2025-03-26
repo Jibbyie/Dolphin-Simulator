@@ -19,6 +19,8 @@ public class HealthSystem : MonoBehaviour
     private BreathingSystem breathingSystem;
     private bool isDead = false;
 
+    public GameObject rewardPrefab;
+
     void Start()
     {
         currentHealth = maxHealth;
@@ -110,6 +112,11 @@ public class HealthSystem : MonoBehaviour
         {
             Debug.Log("Enemy died!");
             SimpleQuestManager.Instance.enemyDefeated = true;
+
+            if (rewardPrefab != null)
+            {
+                Instantiate(rewardPrefab, transform.position, Quaternion.identity);
+            }
 
             if (SimpleQuestManager.Instance.questGiver != null)
             {

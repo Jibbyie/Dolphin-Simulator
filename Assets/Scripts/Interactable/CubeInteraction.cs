@@ -16,7 +16,14 @@ public class CubeInteraction : MonoBehaviour
     public TextMeshPro questFloatingText;
     public Button acceptButton;
     public Button declineButton;
+    public CanvasGroup missionCompleteUI;
 
+    [Header("Audio")]
+    public AudioSource missionAcceptedSound;
+    public AudioSource missionCompleteSound;
+    public AudioSource backgroundMusic;            
+    public AudioSource combatMusic;           
+    
     private bool playerInRange = false;
     private bool missionDeclined = false;
     private bool missionGiven = false;
@@ -54,6 +61,7 @@ public class CubeInteraction : MonoBehaviour
 
             if (SimpleQuestManager.Instance.enemyDefeated && SimpleQuestManager.Instance.missionAccepted && !SimpleQuestManager.Instance.rewardClaimed)
             {
+
                 if (questFloatingText != null)
                     questFloatingText.gameObject.SetActive(false);
 
@@ -62,6 +70,19 @@ public class CubeInteraction : MonoBehaviour
                 SimpleQuestManager.Instance.rewardClaimed = true;
                 acceptButton.gameObject.SetActive(false);
                 declineButton.gameObject.SetActive(false);
+
+                if (combatMusic != null)
+                    combatMusic.Stop();
+
+                if (backgroundMusic != null && !backgroundMusic.isPlaying)
+                    backgroundMusic.Play();
+
+                if (missionCompleteSound != null)
+                    missionCompleteSound.Play();
+
+                if (missionCompleteUI != null)
+                    StartCoroutine(FadeMissionCompleteText());
+
                 return;
             }
 
@@ -113,6 +134,16 @@ public class CubeInteraction : MonoBehaviour
         if (Enemy != null)
             Enemy.SetActive(true);
 
+        if (missionAcceptedSound != null)
+            missionAcceptedSound.Play();
+
+        if (backgroundMusic != null)
+            backgroundMusic.Stop();
+
+        if (combatMusic != null && !combatMusic.isPlaying)
+            combatMusic.Play();
+
+
         acceptButton.gameObject.SetActive(false);
         declineButton.gameObject.SetActive(false);
         missionText.text = "";
@@ -140,6 +171,38 @@ public class CubeInteraction : MonoBehaviour
         declineButton.gameObject.SetActive(false);
         missionText.text = "";
     }
+    IEnumerator FadeMissionCompleteText()
+    {
+        missionCompleteUI.alpha = 0;
+        missionCompleteUI.gameObject.SetActive(true);
+
+        float fadeDuration = 1.5f;   
+        float visibleDuration = 2.5f;
+
+        // Fade in
+        float t = 0f;
+        while (t < fadeDuration)
+        {
+            t += Time.deltaTime;
+            missionCompleteUI.alpha = Mathf.Lerp(0, 1, t / fadeDuration);
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(visibleDuration);
+
+        // Fade out
+        t = 0f;
+        while (t < fadeDuration)
+        {
+            t += Time.deltaTime;
+            missionCompleteUI.alpha = Mathf.Lerp(1, 0, t / fadeDuration);
+            yield return null;
+        }
+
+        missionCompleteUI.gameObject.SetActive(false);
+    }
+
+
 
     IEnumerator CloseDialogueAfterDelay(float delay)
     {
@@ -200,7 +263,7 @@ public class CubeInteraction : MonoBehaviour
     {
         missionGiven = true;
         dialogueText.text = "Yo. I got a job for you...";
-        missionText.text = "Take down that rogue red cube. He's been wildin'.";
+        missionText.text = "Take down that rogue red cube. He's been wildin'. Bring back his pearl chain.";
 
         acceptButton.gameObject.SetActive(true);
         declineButton.gameObject.SetActive(true);
