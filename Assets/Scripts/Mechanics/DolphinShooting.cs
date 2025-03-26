@@ -16,7 +16,7 @@ public class DolphinShooting : MonoBehaviour
 
     void HandleShooting()
     {
-        if (Input.GetMouseButtonDown(0) && Time.time >= nextFireTime) // Left-click
+        if (Input.GetMouseButtonDown(1) && Time.time >= nextFireTime) // Left-click
         {
             Shoot();
             nextFireTime = Time.time + fireRate;

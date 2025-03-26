@@ -109,6 +109,7 @@ public class HealthSystem : MonoBehaviour
         else if (CompareTag("Enemy"))
         {
             Debug.Log("Enemy died!");
+            SimpleQuestManager.Instance.enemyDefeated = true; 
             Destroy(gameObject);
         }
     }
