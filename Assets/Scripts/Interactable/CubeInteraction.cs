@@ -205,8 +205,8 @@ public class CubeInteraction : MonoBehaviour
         acceptButton.gameObject.SetActive(true);
         declineButton.gameObject.SetActive(true);
 
-        acceptButton.GetComponentInChildren<TMP_Text>().text = "Bet, I'm on it";
-        declineButton.GetComponentInChildren<TMP_Text>().text = "Nah, I'm good";
+        acceptButton.GetComponentInChildren<TMP_Text>().text = "<color=green>Bet, I'm on it</color>";
+        declineButton.GetComponentInChildren<TMP_Text>().text = "<color=red>Nah, I'm good</color>";
 
         acceptButton.onClick.RemoveAllListeners();
         declineButton.onClick.RemoveAllListeners();
