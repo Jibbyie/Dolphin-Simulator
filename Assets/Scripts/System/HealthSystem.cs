@@ -10,7 +10,7 @@ public class HealthSystem : MonoBehaviour
 
     [Header("UI (Optional)")]
     public Text healthText; // For dolphin HUD
-    public TextMeshPro floatingHealthText; // Assign a child TextMesh manually in enemy prefab
+    public TextMeshPro floatingHealthText; 
 
     [Header("Audio (Optional)")]
     public AudioSource deathSound;
@@ -109,7 +109,13 @@ public class HealthSystem : MonoBehaviour
         else if (CompareTag("Enemy"))
         {
             Debug.Log("Enemy died!");
-            SimpleQuestManager.Instance.enemyDefeated = true; 
+            SimpleQuestManager.Instance.enemyDefeated = true;
+
+            if (SimpleQuestManager.Instance.questGiver != null)
+            {
+                SimpleQuestManager.Instance.questGiver.OnEnemyDefeated();
+            }
+
             Destroy(gameObject);
         }
     }

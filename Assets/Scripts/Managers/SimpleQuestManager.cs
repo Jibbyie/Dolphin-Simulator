@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class SimpleQuestManager : MonoBehaviour
 {
+    public CubeInteraction questGiver; 
     public static SimpleQuestManager Instance;
 
     public bool missionAccepted = false;
