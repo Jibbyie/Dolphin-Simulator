@@ -17,6 +17,9 @@ public class CubeInteraction : MonoBehaviour
     public Button acceptButton;
     public Button declineButton;
     public CanvasGroup missionCompleteUI;
+    public CanvasGroup missionOverlayTextGroup;
+    public TMP_Text missionOverlayText;
+
 
     [Header("Audio")]
     public AudioSource missionAcceptedSound;
@@ -128,6 +131,8 @@ public class CubeInteraction : MonoBehaviour
 
     void AcceptMission()
     {
+        StartCoroutine(PlayMissionCinematic());
+
         dialogueText.text = "Aight. Go deal with him.";
         SimpleQuestManager.Instance.missionAccepted = true;
 
@@ -171,6 +176,72 @@ public class CubeInteraction : MonoBehaviour
         declineButton.gameObject.SetActive(false);
         missionText.text = "";
     }
+    IEnumerator PlayMissionCinematic()
+    {
+        // Disable movement
+        DolphinMovement movement = FindObjectOfType<DolphinMovement>();
+        if (movement != null)
+            movement.enabled = false;
+
+        // Hide dialogue UI
+        if (dialogueUI != null)
+            dialogueUI.SetActive(false);
+
+        // Set mission overlay text
+        if (missionOverlayText != null)
+            missionOverlayText.text = "Take his *** out.";
+
+        // Fade in overlay during pan
+        if (missionOverlayTextGroup != null)
+        {
+            missionOverlayTextGroup.alpha = 0;
+            missionOverlayTextGroup.gameObject.SetActive(true);
+        }
+
+        ThirdPersonCamera cam = Camera.main.GetComponent<ThirdPersonCamera>();
+        if (cam != null)
+            cam.PlayCinematicPan(Enemy.transform, 3.5f);
+
+        float fadeInDuration = 1.5f;
+        float holdDuration = 1.5f;
+        float fadeOutDuration = 1f;
+        float totalDuration = fadeInDuration + holdDuration + fadeOutDuration;
+
+        float timer = 0f;
+
+        while (timer < totalDuration)
+        {
+            timer += Time.deltaTime;
+
+            // Fade in
+            if (timer < fadeInDuration)
+            {
+                missionOverlayTextGroup.alpha = Mathf.Lerp(0, 1, timer / fadeInDuration);
+            }
+            // Hold
+            else if (timer < fadeInDuration + holdDuration)
+            {
+                missionOverlayTextGroup.alpha = 1;
+            }
+            // Fade out
+            else
+            {
+                float t = (timer - fadeInDuration - holdDuration) / fadeOutDuration;
+                missionOverlayTextGroup.alpha = Mathf.Lerp(1, 0, t);
+            }
+
+            yield return null;
+        }
+
+        missionOverlayTextGroup.alpha = 0;
+        missionOverlayTextGroup.gameObject.SetActive(false);
+
+        // Re-enable movement
+        if (movement != null)
+            movement.enabled = true;
+    }
+
+
     IEnumerator FadeMissionCompleteText()
     {
         missionCompleteUI.alpha = 0;
@@ -201,7 +272,6 @@ public class CubeInteraction : MonoBehaviour
 
         missionCompleteUI.gameObject.SetActive(false);
     }
-
 
 
     IEnumerator CloseDialogueAfterDelay(float delay)
@@ -285,7 +355,7 @@ public class CubeInteraction : MonoBehaviour
         acceptButton.gameObject.SetActive(true);
         declineButton.gameObject.SetActive(true);
 
-        acceptButton.GetComponentInChildren<TMP_Text>().text = "<color=green>Bet, I'm on it</color>";
+        acceptButton.GetComponentInChildren<TMP_Text>().text = "<color=#4CAF50>Bet, I'm on it</color>";
         declineButton.GetComponentInChildren<TMP_Text>().text = "<color=red>Nah cuzz, I'm good</color>";
 
         acceptButton.onClick.RemoveAllListeners();
