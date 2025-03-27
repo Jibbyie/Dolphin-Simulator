@@ -25,8 +25,11 @@ public class CubeInteraction : MonoBehaviour
     public AudioSource missionAcceptedSound;
     public AudioSource missionCompleteSound;
     public AudioSource backgroundMusic;            
-    public AudioSource combatMusic;           
-    
+    public AudioSource combatMusic;
+    public AudioSource dialogueAudioSource;
+    public AudioClip[] dolphinSounds;
+
+
     private bool playerInRange = false;
     private bool missionDeclined = false;
     private bool missionGiven = false;
@@ -183,6 +186,16 @@ public class CubeInteraction : MonoBehaviour
         missionText.text = "";
     }
 
+    void PlayRandomDolphinSound()
+    {
+        if (dolphinSounds.Length > 0 && dialogueAudioSource != null)
+        {
+            int randomIndex = Random.Range(0, dolphinSounds.Length);
+            dialogueAudioSource.PlayOneShot(dolphinSounds[randomIndex]);
+        }
+    }
+
+
     IEnumerator PlayMissionCinematic()
     {
         // Disable movement
@@ -338,7 +351,11 @@ public class CubeInteraction : MonoBehaviour
         {
             acceptButton.gameObject.SetActive(true);
             acceptButton.GetComponentInChildren<TMP_Text>().text = node.options[0].text;
-            acceptButton.onClick.AddListener(() => ShowNode(node.options[0].nextNode));
+            acceptButton.onClick.AddListener(() =>
+            {
+                PlayRandomDolphinSound();
+                ShowNode(node.options[0].nextNode);
+            });
         }
         else acceptButton.gameObject.SetActive(false);
 
@@ -346,7 +363,12 @@ public class CubeInteraction : MonoBehaviour
         {
             declineButton.gameObject.SetActive(true);
             declineButton.GetComponentInChildren<TMP_Text>().text = node.options[1].text;
-            declineButton.onClick.AddListener(() => ShowNode(node.options[1].nextNode));
+            declineButton.onClick.AddListener(() =>
+            {
+                PlayRandomDolphinSound();
+                ShowNode(node.options[1].nextNode);
+            });
+
         }
         else declineButton.gameObject.SetActive(false);
 
