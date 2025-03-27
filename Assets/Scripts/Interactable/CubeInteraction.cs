@@ -86,6 +86,8 @@ public class CubeInteraction : MonoBehaviour
                 if (missionCompleteUI != null)
                     StartCoroutine(FadeMissionCompleteText());
 
+                StartCoroutine(CloseDialogueAfterDelay(2f));
+
                 return;
             }
 
@@ -180,6 +182,7 @@ public class CubeInteraction : MonoBehaviour
         declineButton.gameObject.SetActive(false);
         missionText.text = "";
     }
+
     IEnumerator PlayMissionCinematic()
     {
         // Disable movement
