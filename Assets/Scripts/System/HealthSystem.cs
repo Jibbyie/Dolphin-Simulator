@@ -14,6 +14,8 @@ public class HealthSystem : MonoBehaviour
 
     [Header("Audio (Optional)")]
     public AudioSource deathSound;
+    public AudioSource hitSound;
+    public AudioSource healSound;
 
     private AudioSource[] allAudioSources;
     private BreathingSystem breathingSystem;
@@ -63,6 +65,9 @@ public class HealthSystem : MonoBehaviour
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
         UpdateHealthText();
 
+        if (hitSound != null)
+            hitSound.Play();
+
         if (IsDead())
         {
             Die();
@@ -74,6 +79,9 @@ public class HealthSystem : MonoBehaviour
         currentHealth += amount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
         UpdateHealthText();
+
+        if (healSound != null)
+            healSound.Play();
     }
 
     public bool IsDead()

@@ -7,6 +7,10 @@ public class DolphinShooting : MonoBehaviour
     public Transform firePoint;
     public float fireRate = 0.5f;
 
+    [Header("Audio Settings")]
+    public AudioSource shootSound;
+
+
     private float nextFireTime = 0f;
 
     void Update()
@@ -29,6 +33,9 @@ public class DolphinShooting : MonoBehaviour
         {
             GameObject proj = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
             proj.tag = "PlayerProjectile";
+
+            if (shootSound != null)
+                shootSound.Play();
         }
         else
         {
