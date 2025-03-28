@@ -115,7 +115,7 @@ MonoBehaviour:
     material: {fileID: 2100000, guid: d7eff91adf883494db9dbd5fd180ae71, type: 2}
     renderPassEvent: 400
     color: {r: 0, g: 0.63970053, b: 0.65882355, a: 0}
-    distance: 75
+    distance: 20
     alpha: 0.139
     refraction: 0.2
     normalmap: {fileID: 2800000, guid: 08ef20a01c156e1428ca81211ca1275d, type: 3}

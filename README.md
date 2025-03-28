@@ -16,7 +16,6 @@ This project is being developed by two people:
 - Basic rotation and wall collision handling
 
 ### 🌊 Breathing System
-- Dolphin has a limited breath timer while underwater
 - Breath depletes below a defined water surface height
 - Breath regenerates at the surface
 - If breath reaches zero, the dolphin dies
