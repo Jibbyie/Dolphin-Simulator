@@ -8,7 +8,7 @@ This project is being developed by two people:
 
 ---
 
-## Core Mechanics Implemented So Far
+## Core Mechanics Implemented So Far.
 
 ### 🐬 Dolphin Movement.
 - Full 3D underwater movement with floating and sinking mechanics
