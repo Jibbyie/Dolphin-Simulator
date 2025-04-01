@@ -15,7 +15,7 @@ This project is being developed by two people:
 - Sprinting with stamina (sprint bar UI + speed boost)
 - Basic rotation and wall collision handling
 
-### 🌊 Breathing System
+### 🌊 Breathing System.
 - Breath depletes below a defined water surface height
 - Breath regenerates at the surface
 - If breath reaches zero, the dolphin dies
