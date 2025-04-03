@@ -4,7 +4,7 @@ Dolphin Simulator is an absurdist-surrealist comedy prototype built in Unity. De
 
 This project is being developed by two people:
 - **Programming**: Jibby (that’s me)
-- **Design, Modeling & Animation**: Collaborating with a designer friend
+- **Design, Modeling & Animation**: Collaborating with a designer friend.
 
 ---
 
