@@ -1,6 +1,6 @@
 # Dolphin Simulator.
 
-Dolphin Simulator is an absurdist-surrealist comedy prototype built in Unity. Developed as a final MSc project with the intention of evolving into a full commercial release on Steam, the game casts you as a weapon-wielding dolphin navigating a weird underwater world of chaos, comedy, and combat.
+Dolphin Simulator is an absurdist-surrealist comedy prototype built in Unity. Developed as a final MSc project with the intention of evolving into a full commercial release on Steam, the game casts you as a weapon-wielding dolphin navigating a weird underwater world of chaos, comedy, and combat..
 
 This project is being developed by two people:
 - **Programming**: Jibby (that’s me)
