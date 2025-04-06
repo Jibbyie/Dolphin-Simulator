@@ -4,131 +4,198 @@ using UnityEngine;
 
 public class DolphinMovement : MonoBehaviour
 {
+    [Header("Movement Settings")]
     public float moveSpeed = 5f;
     public float floatSpeed = 2f;
     public float sinkSpeed = 2f;
-    public float rotationSpeed = 100f; // Speed of rotation
-    public float waterSurfaceHeight = 10f; // Limit for floating
-    public float normalAnimationSpeed = 1.5f; // Animation speed when moving normally
-    public float sprintAnimationMultiplier = 3f; // Sprinting animation multiplier
+    public float rotationSpeed = 10f;
+    public float waterSurfaceHeight = 10f;
+    public float normalAnimationSpeed = 1.5f;
+    public float sprintAnimationMultiplier = 3f;
 
-    private Rigidbody rb;
-    private Animation dolphinAnimation; // Reference to the Animation component
-    private Sprinting sprintingScript; // Reference to sprinting script
+    [Header("Aim Settings")]
+    public float aimingMoveSpeedMultiplier = 0.7f; // Slower movement while aiming
 
     [Header("Audio")]
     public AudioSource movementSound;
     public AudioSource floatingSound;
     public AudioSource sinkingSound;
 
+    // Private variables
+    private Rigidbody rb;
+    private Animation dolphinAnimation;
+    private Sprinting sprintingScript;
+    private Transform cameraTransform;
+    private DolphinShooting shootingScript;
+
+    // Input variables
+    private Vector2 movementInput;
+    private bool isFloatingInput;
+    private bool isSinkingInput;
+    private bool isAimingInput;
+
+    // State variables
     private bool isMoving = false;
     private bool isFloating = false;
     private bool isSinking = false;
+    private bool isAiming = false;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rb.useGravity = false; // Disable gravity for floating effect
-        rb.constraints = RigidbodyConstraints.FreezeRotation; // Prevent unwanted rotation
+        rb.useGravity = false;
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
 
         dolphinAnimation = GetComponentInChildren<Animation>();
-        sprintingScript = GetComponent<Sprinting>(); // Get reference to sprinting
+        sprintingScript = GetComponent<Sprinting>();
+        shootingScript = GetComponent<DolphinShooting>();
+
+        // Find the main camera's transform
+        if (Camera.main != null)
+        {
+            cameraTransform = Camera.main.transform;
+        }
+        else
+        {
+            Debug.LogError("Main camera not found! Ensure there is a camera tagged as MainCamera.");
+        }
 
         if (dolphinAnimation == null)
         {
             Debug.LogError("Dolphin Animation component not found! Make sure it's on the child object.");
         }
     }
- 
-    void FixedUpdate() // Use FixedUpdate for Rigidbody physics
+
+    void Update()
     {
-        // Forward & Backward movement (based on current rotation)
-        float moveZ = Input.GetAxis("Vertical");
-        isMoving = Mathf.Abs(moveZ) > 0.1f; // Check if moving
+        // Get input from controller/keyboard
+        GetInput();
 
-        if (isMoving)
-        {
-            Vector3 move = transform.forward * moveZ * moveSpeed * Time.fixedDeltaTime;
-            rb.MovePosition(rb.position + move); // Use Rigidbody.MovePosition()
-        }
+        // Update animation
+        UpdateAnimation();
 
-        // Rotation (A & D keys for turning)
-        float rotateY = Input.GetAxis("Horizontal") * rotationSpeed * Time.fixedDeltaTime;
-        Quaternion deltaRotation = Quaternion.Euler(0, rotateY, 0);
-        rb.MoveRotation(rb.rotation * deltaRotation); // Use Rigidbody.MoveRotation()
+        // Handle audio
+        UpdateAudio();
+    }
 
-        // Play movement sound
-        if (isMoving && !movementSound.isPlaying)
-        {
-            movementSound.Play();
-        }
-        else if (!isMoving && movementSound.isPlaying)
-        {
-            movementSound.Stop();
-        }
+    void FixedUpdate()
+    {
+        // Apply movement
+        ApplyMovement();
 
-        // Adjust animation speed based on movement & sprinting
-        if (dolphinAnimation != null)
+        // Apply vertical movement (floating/sinking)
+        ApplyVerticalMovement();
+    }
+
+    void GetInput()
+    {
+        // Get movement input (works with both keyboard and controller)
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        movementInput = new Vector2(horizontal, vertical);
+
+        // Get floating/sinking input
+        isFloatingInput = Input.GetButton("Jump"); // Space on keyboard, button on controller
+        isSinkingInput = Input.GetKey(KeyCode.F); // F on keyboard, could map to controller button
+
+        // Get aiming input (LT on controller, could be right mouse on keyboard)
+        isAimingInput = Input.GetButton("Fire2"); // Right mouse or LT usually
+
+        // Update aiming state
+        if (isAimingInput != isAiming)
         {
-            string animName = "Armature_Dolphin|Armature_Dolphin|Armature_Dolphin|Idle";
-            if (dolphinAnimation[animName] != null)
+            isAiming = isAimingInput;
+            if (shootingScript != null)
             {
-                bool isSprinting = sprintingScript != null && sprintingScript.IsSprinting();
-                if (!isMoving)
-                {
-                    dolphinAnimation[animName].speed = 1.0f; // Idle animation speed
-                }
-                else if (isSprinting)
-                {
-                    dolphinAnimation[animName].speed = sprintAnimationMultiplier; // Faster animation when sprinting
-                }
-                else
-                {
-                    dolphinAnimation[animName].speed = normalAnimationSpeed; // Normal movement speed
-                }
-            }
-            else
-            {
-                Debug.LogError("Animation clip '" + animName + "' not found in the Animation component.");
+                shootingScript.SetAimingMode(isAiming);
             }
         }
+    }
 
-        // Floating & Sinking
+    void ApplyMovement()
+    {
+        if (cameraTransform == null) return;
+
+        // Only proceed if we have movement input
+        if (movementInput.magnitude > 0.1f)
+        {
+            isMoving = true;
+
+            // Convert input to 3D space relative to camera
+            Vector3 cameraForward = Vector3.ProjectOnPlane(cameraTransform.forward, Vector3.up).normalized;
+            Vector3 cameraRight = Vector3.Cross(Vector3.up, cameraForward).normalized;
+
+            // Calculate the direction in world space
+            Vector3 moveDirection = (cameraForward * movementInput.y + cameraRight * movementInput.x).normalized;
+
+            // Apply speed multiplier if aiming
+            float currentMoveSpeed = moveSpeed;
+            if (isAiming)
+            {
+                currentMoveSpeed *= aimingMoveSpeedMultiplier;
+            }
+            else if (sprintingScript != null && sprintingScript.IsSprinting())
+            {
+                currentMoveSpeed *= sprintingScript.sprintMultiplier;
+            }
+
+            // Apply movement
+            Vector3 movement = moveDirection * currentMoveSpeed * Time.fixedDeltaTime;
+            rb.MovePosition(rb.position + movement);
+
+            // Rotate to face movement direction if not aiming
+            if (!isAiming)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
+                rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime));
+            }
+        }
+        else
+        {
+            isMoving = false;
+        }
+    }
+
+    void ApplyVerticalMovement()
+    {
         float verticalVelocity = 0f;
 
-        if (Input.GetKey(KeyCode.Space) && transform.position.y < waterSurfaceHeight) // Floating up
+        // Handle floating
+        if (isFloatingInput && transform.position.y < waterSurfaceHeight)
         {
             verticalVelocity = floatSpeed;
-            if (!isFloating)
+            isFloating = true;
+
+            // Play floating sound if not already playing
+            if (floatingSound != null && !floatingSound.isPlaying)
             {
-                isFloating = true;
-                if (floatingSound != null && !floatingSound.isPlaying)
-                {
-                    floatingSound.Play();
-                }
+                floatingSound.Play();
             }
         }
-        else if (Input.GetKey(KeyCode.F)) // Sinking down
+        // Handle sinking
+        else if (isSinkingInput)
         {
             verticalVelocity = -sinkSpeed;
-            if (!isSinking)
+            isSinking = true;
+
+            // Play sinking sound if not already playing
+            if (sinkingSound != null && !sinkingSound.isPlaying)
             {
-                isSinking = true;
-                if (sinkingSound != null && !sinkingSound.isPlaying)
-                {
-                    sinkingSound.Play();
-                }
+                sinkingSound.Play();
             }
         }
         else
         {
             isFloating = false;
             isSinking = false;
-            if (floatingSound != null)
+
+            // Stop floating and sinking sounds
+            if (floatingSound != null && floatingSound.isPlaying)
             {
                 floatingSound.Stop();
             }
-            if (sinkingSound != null)
+
+            if (sinkingSound != null && sinkingSound.isPlaying)
             {
                 sinkingSound.Stop();
             }
@@ -138,30 +205,75 @@ public class DolphinMovement : MonoBehaviour
         rb.velocity = new Vector3(rb.velocity.x, verticalVelocity, rb.velocity.z);
     }
 
-    void OnCollisionStay(Collision collision) // PROTOTYPE HARD CODED FIX TO STOP PHASING THROUGH WALLS
+    void UpdateAnimation()
+    {
+        if (dolphinAnimation != null)
+        {
+            string animName = "Armature_Dolphin|Armature_Dolphin|Armature_Dolphin|Idle";
+            if (dolphinAnimation[animName] != null)
+            {
+                if (!isMoving)
+                {
+                    dolphinAnimation[animName].speed = 1.0f; // Idle animation speed
+                }
+                else if (sprintingScript != null && sprintingScript.IsSprinting() && !isAiming)
+                {
+                    dolphinAnimation[animName].speed = sprintAnimationMultiplier; // Sprint animation
+                }
+                else if (isAiming)
+                {
+                    dolphinAnimation[animName].speed = normalAnimationSpeed * 0.8f; // Slower when aiming
+                }
+                else
+                {
+                    dolphinAnimation[animName].speed = normalAnimationSpeed; // Normal speed
+                }
+            }
+            else
+            {
+                Debug.LogError("Animation clip '" + animName + "' not found!");
+            }
+        }
+    }
+
+    void UpdateAudio()
+    {
+        // Handle movement sound
+        if (isMoving && !movementSound.isPlaying)
+        {
+            movementSound.Play();
+        }
+        else if (!isMoving && movementSound.isPlaying)
+        {
+            movementSound.Stop();
+        }
+    }
+
+    void OnCollisionStay(Collision collision)
     {
         // Check if the collision is with a wall
         if (collision.gameObject.CompareTag("Wall"))
         {
-            // Get the contact point of the collision
+            // Get the contact point
             ContactPoint contact = collision.contacts[0];
 
-            // Calculate the pushback direction
+            // Calculate push direction
             Vector3 pushBackDirection = transform.position - contact.point;
             pushBackDirection.Normalize();
 
-            // Push the dolphin back slightly from the wall
+            // Push back from wall
             rb.MovePosition(transform.position + pushBackDirection * 0.1f);
 
-            // Stop all forward movement to prevent further penetration
-            Vector3 adjustedVelocity = rb.velocity;
-            adjustedVelocity.z = 0;
+            // Zero out velocity component in collision direction
+            Vector3 adjustedVelocity = Vector3.ProjectOnPlane(rb.velocity, contact.normal);
             rb.velocity = adjustedVelocity;
 
-            // Zero out angular velocity to prevent rotation from collision
+            // Zero out angular velocity
             rb.angularVelocity = Vector3.zero;
         }
     }
 
-
+    // Public methods for other scripts to check state
+    public bool IsAiming() { return isAiming; }
+    public bool IsMoving() { return isMoving; }
 }
