@@ -1,122 +1,158 @@
 using UnityEngine;
-using UnityEngine.UI; // Make sure you have 'using UnityEngine.UI;'
+using UnityEngine.UI;
 
 [RequireComponent(typeof(DolphinMovement))]
 public class Sprinting : MonoBehaviour
 {
-    [Header("Sprinting Settings")]
-    public float maxSprint = 100f;
-    public float sprintDecreaseRate = 10f;
-    public float sprintRecoveryRate = 15f;
-    [Tooltip("Multiplier applied to the base movement force when sprinting.")]
-    public float sprintMultiplier = 2.0f; // This is read by DolphinMovement
-    public float minSprintToStart = 20f; // Minimum stamina needed to *begin* sprinting
-    public float minSprintToMaintain = 5f; // Stamina level below which sprinting stops
+    [Header("Sprint Settings")]
+    [Tooltip("Maximum sprint meter value")]
+    public float maxSprintMeter = 100f;
+    [Tooltip("How fast the sprint meter drains when sprinting")]
+    public float drainRate = 10f;
+    [Tooltip("How fast the sprint meter recovers when not sprinting")]
+    public float recoveryRate = 15f;
+    [Tooltip("Speed multiplier when sprinting")]
+    public float sprintMultiplier = 2.0f;
+    [Tooltip("Minimum sprint meter needed to start sprinting")]
+    public float minToStartSprint = 20f;
+    [Tooltip("Minimum sprint meter needed to continue sprinting")]
+    public float minToMaintainSprint = 5f;
 
     [Header("UI")]
-    public Text sprintText; // Drag the UI text here
+    public Text sprintMeterText;
 
     [Header("Audio")]
-    public AudioSource sprintSound; // Assign sprinting audio (should be looping)
+    public AudioSource sprintSound;
 
-    private float currentSprint;
+    // Internal state
+    private float currentSprintMeter;
     private bool isSprinting = false;
-    private DolphinMovement movementScript; // Reference for checking movement state if needed
+    private DolphinMovement movementScript;
 
     void Start()
     {
-        currentSprint = maxSprint;
+        currentSprintMeter = maxSprintMeter;
         movementScript = GetComponent<DolphinMovement>();
 
         if (movementScript == null)
         {
-            Debug.LogError("Sprinting script requires DolphinMovement script on the same GameObject.", this);
+            Debug.LogError("Sprint system requires DolphinMovement component", this);
+            enabled = false;
         }
 
-        UpdateSprintUI(); // Initial UI update
+        // Lock and hide cursor
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        UpdateSprintUI();
     }
 
     void Update()
     {
-        // Check movement input (using DolphinMovement's input state might be slightly cleaner, but this works)
-        // We need to know if the player *intends* to move forward/sideways to allow sprinting
-        bool wantsToMove = Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.1f || Mathf.Abs(Input.GetAxisRaw("Vertical")) > 0.1f;
-
-        // Conditions to be sprinting: Holding Shift, wants to move, has enough stamina OR is already sprinting and has minimum stamina
-        bool canSprintNow = Input.GetKey(KeyCode.LeftShift) && wantsToMove &&
-                           ((isSprinting && currentSprint > minSprintToMaintain) || (!isSprinting && currentSprint > minSprintToStart));
-
-        if (canSprintNow)
+        // Skip if movement is disabled
+        if (movementScript != null && !movementScript.IsMovementEnabled())
         {
-            // --- Start or Continue Sprinting ---
+            if (isSprinting)
+            {
+                StopSprinting();
+            }
+            return;
+        }
+
+        // Ensure cursor remains locked during gameplay
+        if (Cursor.lockState != CursorLockMode.Locked)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
+        // Check if player is trying to move
+        bool isMoving = IsPlayerMoving();
+
+        // Determine if player can sprint (using Left Shift key)
+        bool wantsToSprint = Input.GetKey(KeyCode.LeftShift);
+        bool canStartSprint = !isSprinting && currentSprintMeter > minToStartSprint;
+        bool canMaintainSprint = isSprinting && currentSprintMeter > minToMaintainSprint;
+
+        // Sprint when: wants to sprint, is moving, and either starting or maintaining sprint
+        if (wantsToSprint && isMoving && (canStartSprint || canMaintainSprint))
+        {
+            // Start sprinting if not already
             if (!isSprinting)
             {
                 isSprinting = true;
-                // Play sound only when starting
+
+                // Play sprint sound
                 if (sprintSound != null)
                 {
                     sprintSound.Play();
                 }
             }
 
-            currentSprint -= sprintDecreaseRate * Time.deltaTime;
-            currentSprint = Mathf.Max(currentSprint, 0); // Ensure it doesn't go below 0
+            // Drain sprint meter
+            currentSprintMeter -= drainRate * Time.deltaTime;
+            currentSprintMeter = Mathf.Max(currentSprintMeter, 0f);
 
-            // Check if we ran out of stamina while sprinting
-            if (currentSprint <= minSprintToMaintain)
+            // Stop sprinting if meter gets too low
+            if (currentSprintMeter <= minToMaintainSprint)
             {
                 StopSprinting();
             }
         }
         else
         {
-            // --- Stop Sprinting or Recover Stamina ---
+            // Stop sprinting if we are sprinting but can't anymore
             if (isSprinting)
             {
-                StopSprinting(); // Stop if Shift released, stopped moving, or ran out
+                StopSprinting();
             }
 
-            // Recover stamina if not currently trying to sprint (or stopped)
-            if (!Input.GetKey(KeyCode.LeftShift) || !wantsToMove || currentSprint < maxSprint)
+            // Recover sprint meter when not trying to sprint
+            if (!wantsToSprint || !isMoving)
             {
-                currentSprint += sprintRecoveryRate * Time.deltaTime;
-                currentSprint = Mathf.Min(currentSprint, maxSprint); // Ensure it doesn't exceed max
+                currentSprintMeter += recoveryRate * Time.deltaTime;
+                currentSprintMeter = Mathf.Min(currentSprintMeter, maxSprintMeter);
             }
         }
 
+        // Update UI
         UpdateSprintUI();
+    }
+
+    bool IsPlayerMoving()
+    {
+        return Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.1f ||
+               Mathf.Abs(Input.GetAxisRaw("Vertical")) > 0.1f;
     }
 
     void StopSprinting()
     {
-        if (!isSprinting) return; // Already stopped
-
         isSprinting = false;
-        if (sprintSound != null)
+
+        // Stop sprint sound
+        if (sprintSound != null && sprintSound.isPlaying)
         {
-            sprintSound.Stop(); // Or fade out
+            sprintSound.Stop();
         }
     }
 
     void UpdateSprintUI()
     {
-        if (sprintText != null)
+        if (sprintMeterText != null)
         {
-            // Using F0 format specifier to show whole number
-            sprintText.text = $"Sprint: {currentSprint:F0} / {maxSprint:F0}";
+            sprintMeterText.text = $"Sprint: {Mathf.RoundToInt(currentSprintMeter)}/{Mathf.RoundToInt(maxSprintMeter)}";
         }
     }
 
-    // Public getter for DolphinMovement to know the state
+    // Public getter to check if sprinting
     public bool IsSprinting()
     {
         return isSprinting;
     }
 
-    // Public getter for DolphinMovement to get the multiplier
+    // Public getter for the sprint multiplier
     public float GetSprintMultiplier()
     {
-        // Return 1 if not sprinting to avoid multiplying force by 0 if script disabled etc.
         return isSprinting ? sprintMultiplier : 1.0f;
     }
 }
