@@ -18,6 +18,8 @@ public class DolphinMovement : MonoBehaviour
     public string swimAnimationName = "Armature_Dolphin|Armature_Dolphin|Armature_Dolphin|Idle";
     public float idleAnimSpeed = 1.0f;
     public float normalSwimSpeed = 1.5f;
+    [Tooltip("Animation speed multiplier when sprinting")]
+    public float sprintAnimMultiplier = 3.0f;  // Added dedicated sprint animation multiplier
 
     [Header("Audio")]
     public AudioSource swimSound;
@@ -81,12 +83,6 @@ public class DolphinMovement : MonoBehaviour
         // Skip input processing if frozen
         if (movementFrozen) return;
 
-        // Make sure cursor is locked and hidden during gameplay
-        if (Cursor.lockState != CursorLockMode.Locked)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
 
         // Mouse look input
         rotationX += Input.GetAxis("Mouse X") * lookSensitivity;
@@ -147,19 +143,27 @@ public class DolphinMovement : MonoBehaviour
         bool isMoving = moveInput.magnitude > 0.1f || Mathf.Abs(verticalInput) > 0.1f;
         bool isSprinting = sprintSystem != null && sprintSystem.IsSprinting();
 
-        // Set animation speed based on movement state
+        // Set animation speed based on movement state with more defined tiers
         if (!isMoving)
         {
+            // Idle animation - slowest
             anim[swimAnimationName].speed = idleAnimSpeed;
         }
         else if (isSprinting)
         {
-            // Use the sprint animation speed from the sprint system
-            anim[swimAnimationName].speed = normalSwimSpeed * sprintSystem.GetSprintMultiplier();
+            // Sprint animation - fastest, now using dedicated sprint multiplier
+            anim[swimAnimationName].speed = normalSwimSpeed * sprintAnimMultiplier;
         }
         else
         {
+            // Normal movement animation - medium speed
             anim[swimAnimationName].speed = normalSwimSpeed;
+        }
+
+        // Debug animation speed state (can be removed in final version)
+        if (isMoving && isSprinting)
+        {
+            Debug.Log($"Sprinting Animation Speed: {anim[swimAnimationName].speed}");
         }
     }
 

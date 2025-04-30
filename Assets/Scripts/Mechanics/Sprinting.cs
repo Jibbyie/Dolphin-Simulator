@@ -40,10 +40,6 @@ public class Sprinting : MonoBehaviour
             enabled = false;
         }
 
-        // Lock and hide cursor
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
         UpdateSprintUI();
     }
 
@@ -57,13 +53,6 @@ public class Sprinting : MonoBehaviour
                 StopSprinting();
             }
             return;
-        }
-
-        // Ensure cursor remains locked during gameplay
-        if (Cursor.lockState != CursorLockMode.Locked)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
         }
 
         // Check if player is trying to move
