@@ -58,7 +58,7 @@ MonoBehaviour:
       type: 0
       typeString: CustomFieldType_Text
     portrait: {fileID: 0}
-    spritePortrait: {fileID: 0}
+    spritePortrait: {fileID: 21300000, guid: 43f3fec942e6a994b9813c3db4b720a6, type: 3}
     alternatePortraits: []
     spritePortraits: []
   - id: 2
@@ -84,7 +84,7 @@ MonoBehaviour:
       type: 0
       typeString: 
     portrait: {fileID: 0}
-    spritePortrait: {fileID: 21300000, guid: 3ca4868c302d3b046ad4516806f6abec, type: 3}
+    spritePortrait: {fileID: 21300000, guid: 90feb66aee353f042994baf7e6059a78, type: 3}
     alternatePortraits: []
     spritePortraits: []
   - id: 3
@@ -110,7 +110,7 @@ MonoBehaviour:
       type: 0
       typeString: 
     portrait: {fileID: 0}
-    spritePortrait: {fileID: 0}
+    spritePortrait: {fileID: 21300000, guid: c385956cbb745f34baa64cc624c3d03d, type: 3}
     alternatePortraits: []
     spritePortraits: []
   items:
@@ -525,11 +525,11 @@ MonoBehaviour:
       - title: Title
         value: 
         type: 0
-        typeString: 
+        typeString: CustomFieldType_Text
       - title: Description
         value: Approach The Sheriff
         type: 0
-        typeString: 
+        typeString: CustomFieldType_Text
       - title: Actor
         value: 2
         type: 5
@@ -541,16 +541,16 @@ MonoBehaviour:
       - title: Menu Text
         value: 
         type: 0
-        typeString: 
+        typeString: CustomFieldType_Text
       - title: Dialogue Text
         value: You again, Diesel. Trouble's floatin' in the reef, and I smell your
           flipper-prints all over it.
         type: 0
-        typeString: 
+        typeString: CustomFieldType_Text
       - title: Sequence
         value: AudioWait(bbc_bottle-nos_nhu0509108-[AudioTrimmer.com])
         type: 0
-        typeString: 
+        typeString: CustomFieldType_Text
       conversationID: 2
       isRoot: 0
       isGroup: 0
@@ -1345,7 +1345,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 52.66664
-        y: 206.00002
+        y: 206.73259
         width: 160
         height: 30
     - id: 3
@@ -1487,7 +1487,7 @@ MonoBehaviour:
         type: 0
         typeString: 
       - title: Dialogue Text
-        value: Talk or I'll make you talk (Threaten).
+        value: Talk or I'll make you talk (Reason).
         type: 0
         typeString: 
       - title: Sequence
@@ -1542,11 +1542,11 @@ MonoBehaviour:
         type: 0
         typeString: 
       - title: Dialogue Text
-        value: (Hold at Gunpoint).
+        value: (Hold at Gunpoint)
         type: 0
         typeString: 
       - title: Sequence
-        value: 
+        value: AudioWait(Gun Cocking Sound Effect-[AudioTrimmer.com])
         type: 0
         typeString: 
       conversationID: 3
