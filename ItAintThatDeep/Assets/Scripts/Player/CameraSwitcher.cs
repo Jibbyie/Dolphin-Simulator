@@ -9,6 +9,8 @@ public class CameraSwitcher : MonoBehaviour
     [SerializeField] private FirstPersonController fpMovement;
     [SerializeField] private Camera mainCamera;
     [SerializeField] private GameObject firstPersonCanvas;
+    public static bool IsFirstPersonActive { get; private set; }
+
 
     private bool usingFP = false;
 
@@ -25,9 +27,10 @@ public class CameraSwitcher : MonoBehaviour
             SetMode(usingFP);
         }
     }
-
     private void SetMode(bool firstPerson)
     {
+        IsFirstPersonActive = firstPerson;
+
         isoCam.Priority = firstPerson ? 10 : 20;
         fpCam.Priority = firstPerson ? 20 : 10;
 
