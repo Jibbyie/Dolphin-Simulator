@@ -7,9 +7,11 @@
 [Ll]ogs/
 [Mm]emoryCaptures/
 [Uu]ser[Ss]ettings/
+TextMesh Pro/
 Assets/Plugins/Editor/JetBrains*
 Assets/Plugins/Pixel Crushers*
 Assets/Paro222*
+Assets/TextMesh Pro
 
 # Cache and local data
 .vscode/
