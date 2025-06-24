@@ -10,7 +10,7 @@ public class CameraSwitcher : MonoBehaviour
     [SerializeField] private Camera mainCamera;
     [SerializeField] private GameObject firstPersonCanvas;
     public static bool IsFirstPersonActive { get; private set; }
-
+    public static event System.Action<bool> OnFirstPersonToggled;
 
     private bool usingFP = false;
 
@@ -44,5 +44,7 @@ public class CameraSwitcher : MonoBehaviour
 
         if (firstPersonCanvas != null)
             firstPersonCanvas.SetActive(firstPerson);
+
+        OnFirstPersonToggled?.Invoke(firstPerson);
     }
 }
