@@ -8,6 +8,11 @@ public class FirstPersonShooter : MonoBehaviour
     [SerializeField] private Camera fpCamera;
     [SerializeField] private AudioSource audioSource;
 
+    [Header("Layer Masking")]
+    [Tooltip("Which layers should be hittable (e.g. only the Target layer)")]
+    [SerializeField] private LayerMask targetLayerMask;
+
+
     [Header("Runtime Weapon State")]
     [SerializeField] private int currentMagazineCount;
     [SerializeField] private int currentReserveMagazineCount;
@@ -100,6 +105,14 @@ public class FirstPersonShooter : MonoBehaviour
         }
 
         PerformDamageRaycast(currentWeaponData);
+
+        // Auto-reload
+        if (IsWeaponRanged(currentWeaponData.weaponType)
+            && currentMagazineCount <= 0
+            && currentReserveMagazineCount > 0)
+        {
+            AttemptReload();
+        }
     }
 
     private void AttemptReload()
@@ -116,6 +129,10 @@ public class FirstPersonShooter : MonoBehaviour
     private IEnumerator ReloadCoroutine(WeaponData currentWeaponData)
     {
         isReloading = true;
+        if (currentWeaponData.reloadSFX != null)
+        {
+            audioSource.PlayOneShot(currentWeaponData.reloadSFX);
+        }
         yield return new WaitForSeconds(currentWeaponData.reloadTime);
 
         int bulletsNeeded = currentWeaponData.magazineSize - currentMagazineCount;
@@ -136,14 +153,39 @@ public class FirstPersonShooter : MonoBehaviour
     private void PerformDamageRaycast(WeaponData currentWeaponData)
     {
         Ray ray = new Ray(fpCamera.transform.position, fpCamera.transform.forward);
-        if (Physics.Raycast(ray, out RaycastHit hitInfo, currentWeaponData.range))
+
+        // If it’s an RPG, do a sphere cast and hit everything in that volume
+        if (currentWeaponData.weaponType == WeaponData.WeaponType.RPG)
         {
-            if (hitInfo.collider.TryGetComponent<DamageReciever>(out var damageReceiver))
+            // SphereCastAll returns all hits along the ray within the given radius
+            RaycastHit[] hits = Physics.SphereCastAll(
+                ray,
+                currentWeaponData.sphereCastRadius,
+                currentWeaponData.range
+            );
+
+            foreach (var hit in hits)
             {
-                damageReceiver.RecieveDamage(currentWeaponData.damage, currentWeaponData.damageType);
+                if (hit.collider.TryGetComponent<DamageReciever>(out var damageReceiver))
+                    damageReceiver.RecieveDamage(currentWeaponData.damage, currentWeaponData.damageType);
+
+                if (hit.collider.TryGetComponent<IHitReactable>(out var reactable))
+                    reactable.OnHit(hit);
+            }
+        }
+        else
+        {
+            if (Physics.Raycast(ray, out RaycastHit hitInfo, currentWeaponData.range, targetLayerMask))
+            {
+                if (hitInfo.collider.TryGetComponent<DamageReciever>(out var damageReceiver))
+                    damageReceiver.RecieveDamage(currentWeaponData.damage, currentWeaponData.damageType);
+
+                if (hitInfo.collider.TryGetComponent<IHitReactable>(out var reactable))
+                    reactable.OnHit(hitInfo);
             }
         }
     }
+
 
     private bool IsWeaponRanged(WeaponData.WeaponType type)
     {

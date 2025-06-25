@@ -31,6 +31,10 @@ public class WeaponData : ScriptableObject
     public float damage;
     public AudioClip shootSFX;
 
+    [Header("RPG Settings (only used for WeaponType.RPG)")]
+    [Tooltip("Radius of the sphere cast for RPG splash damage")]
+    public float sphereCastRadius = 1.5f;
+
     [Header("Distance and Rate/Reload Settings")]
     public float range = 5f;
     public float fireRate = 1f; 
@@ -40,7 +44,14 @@ public class WeaponData : ScriptableObject
     public int magazineSize; // bullets per magazine
     public int clipSize; // reserve bullets in the clip
 
+    [Header("Audio Settings")]
     [Tooltip("Play this when the player equips this weapon")]
     public AudioClip switchSFX;
+
+    [Tooltip("Play this when the player reloads this weapon")]
+    public AudioClip reloadSFX;
+
+    [Tooltip("Play this when the clip is empty")]
+    public AudioClip emptySFX;
 
 }

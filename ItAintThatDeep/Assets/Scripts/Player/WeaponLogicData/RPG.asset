@@ -16,11 +16,14 @@ MonoBehaviour:
   weaponType: 4
   damageType: 4
   damage: 50
-  shootSFX: {fileID: 0}
-  range: 5
-  fireRate: 1
-  reloadTime: 2
-  magazineSize: 5
+  shootSFX: {fileID: 8300000, guid: 4668a6e2cacdd904198a0745483f6a18, type: 3}
+  sphereCastRadius: 5
+  range: 50
+  fireRate: 2
+  reloadTime: 3
+  magazineSize: 1
   clipSize: 5
   switchSFX: {fileID: 0}
+  reloadSFX: {fileID: 8300000, guid: 8ccebb149535a034fb66cffad0e73f8f, type: 3}
+  emptySFX: {fileID: 8300000, guid: ab91f13c381ff6f49904cb551eebc8cf, type: 3}
   explosionRadius: 20

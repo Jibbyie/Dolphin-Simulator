@@ -9,7 +9,6 @@ public class WeaponManager : MonoBehaviour
     public static event System.Action<WeaponData> OnWeaponSwitched;
     [SerializeField] private AudioSource audioSource;
 
-    [SerializeField] WeaponData weaponData;
     private int currentIndex = 0;
     private void Awake()
     {
@@ -19,8 +18,13 @@ public class WeaponManager : MonoBehaviour
 
     private void Start()
     {
-        //currentIndex = 0;
-        //EquipAtIndex(currentIndex);
+        currentIndex = 0;
+        EquipAtIndex(currentIndex);
+    }
+
+    private void OnDestroy()
+    {
+        OnWeaponSwitched = null;
     }
 
     private void Update()
