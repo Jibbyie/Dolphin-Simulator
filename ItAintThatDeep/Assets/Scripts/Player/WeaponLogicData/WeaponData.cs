@@ -33,7 +33,7 @@ public class WeaponData : ScriptableObject
 
     [Header("RPG Settings (only used for WeaponType.RPG)")]
     [Tooltip("Radius of the sphere cast for RPG splash damage")]
-    public float sphereCastRadius = 1.5f;
+    public float sphereCastRadius = 5f;
 
     [Header("Distance and Rate/Reload Settings")]
     public float range = 5f;

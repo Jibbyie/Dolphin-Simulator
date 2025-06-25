@@ -12,168 +12,172 @@ public class WeaponStateTracker : MonoBehaviour
         OutOfAmmo
     }
 
-    [Header("Shooting Display Settings")]
-    [SerializeField] private float shootingStateDisplayDuration = 0.5f;
+    [Header("Shooting UI Timing")]
+    [SerializeField] private float shootingFlashDuration = 0.5f;  // I control how long the shooting icon shows
 
     public static WeaponState CurrentWeaponState { get; private set; } = WeaponState.Idle;
     public static event Action<WeaponState> OnWeaponStateChanged;
 
-    private FirstPersonShooter shooterReference;
-    private WeaponState previousState = WeaponState.Idle;
-    private bool isInShootingDisplayMode = false;
-    private Coroutine shootingDisplayCoroutine;
+    private FirstPersonShooter shooter;            // I query reload and ammo counts from here
+    private WeaponState lastState = WeaponState.Idle;
+    private bool isShowingShootingState = false;   // I block other updates while showing shooting
+    private Coroutine shootingCoroutine;
 
     private void Start()
     {
-        // Find your shooter and subscribe to camera toggles
-        shooterReference = FindFirstObjectByType<FirstPersonShooter>();
-        if (shooterReference == null)
-            Debug.LogError("WeaponStateTracker: Could not find FirstPersonShooter component!");
+        // I listen for actual fire events and weapon switches
+        FirstPersonShooter.OnWeaponFired += OnActualFire;
+        WeaponManager.OnWeaponSwitched += OnWeaponSwitch;
 
-        CameraSwitcher.OnFirstPersonToggled += HandleFirstPersonToggled;
+        shooter = FindFirstObjectByType<FirstPersonShooter>();
+        if (shooter == null)
+            Debug.LogError("WeaponStateTracker: Could not find FirstPersonShooter!");
+
+        CameraSwitcher.OnFirstPersonToggled += OnFirstPersonToggle;
     }
 
     private void Update()
     {
-        // If not in first-person or no weapon, force Idle
+        // I default to Idle when out of first-person or no weapon equipped
         if (!CameraSwitcher.IsFirstPersonActive || WeaponManager.CurrentWeapon == null)
         {
-            UpdateWeaponState(WeaponState.Idle);
+            SetWeaponState(WeaponState.Idle);
             return;
         }
 
-        // Otherwise, decide whether to show Shooting (via coroutine) or the true state
-        WeaponState newState = DetermineCurrentWeaponState();
+        // I let the shooting flash coroutine drive the state when active
+        if (isShowingShootingState)
+            return;
 
-        if (newState == WeaponState.Shooting && !isInShootingDisplayMode)
-        {
-            StartShootingDisplay();
-        }
-        else if (newState != WeaponState.Shooting && !isInShootingDisplayMode)
-        {
-            UpdateWeaponState(newState);
-        }
-        // While in shooting display mode, the coroutine will handle the transition back
+        // Otherwise I determine the correct state: Reloading, OutOfAmmo or Idle
+        SetWeaponState(DetermineState());
     }
 
-    private void HandleFirstPersonToggled(bool isFirstPersonActive)
+    // I check reload/ammo/input to pick the UI state
+    private WeaponState DetermineState()
     {
-        if (!isFirstPersonActive)
-        {
-            // Exiting first-person: cancel any Shooting display and reset to Idle
-            if (shootingDisplayCoroutine != null)
-            {
-                StopCoroutine(shootingDisplayCoroutine);
-                shootingDisplayCoroutine = null;
-            }
-            isInShootingDisplayMode = false;
-            UpdateWeaponState(WeaponState.Idle);
-        }
-        else
-        {
-            // Entering first-person: immediately re-evaluate actual state
-            UpdateWeaponState(DetermineCurrentWeaponState());
-        }
-    }
+        var weapon = WeaponManager.CurrentWeapon;
+        var type = weapon.weaponType;
+        bool currentlyReloading = shooter.GetIsReloading();
+        int magazine = shooter.GetMagazineAmmo();
+        int reserve = shooter.GetReserveAmmo();
 
-    private WeaponState DetermineCurrentWeaponState()
-    {
-        var currentWeapon = WeaponManager.CurrentWeapon;
-
-        // Reloading has top priority for ranged
-        if (IsWeaponRanged(currentWeapon.weaponType) && shooterReference.GetIsReloading())
+        // Reloading has top priority
+        if (FirstPersonShooter.IsRangedWeapon(type) && currentlyReloading)
             return WeaponState.Reloading;
 
-        // Out of ammo
-        if (IsWeaponRanged(currentWeapon.weaponType) &&
-            shooterReference.GetCurrentMagazineCount() <= 0 &&
-            shooterReference.GetCurrentReserveMagazineCount() <= 0)
+        // Out of ammo when both magazine and reserve are empty
+        if (FirstPersonShooter.IsRangedWeapon(type)
+            && magazine <= 0
+            && reserve <= 0)
             return WeaponState.OutOfAmmo;
 
-        // Shooting/attacking
-        if (IsCurrentlyAttacking(currentWeapon.weaponType))
+        // Shooting input shows a quick flash
+        if (IsAttackInput(type))
             return WeaponState.Shooting;
 
+        // Fall back to Idle
         return WeaponState.Idle;
     }
 
-    private bool IsCurrentlyAttacking(WeaponData.WeaponType weaponType)
+    private bool IsAttackInput(WeaponData.WeaponType type)
     {
-        if (weaponType == WeaponData.WeaponType.Rifle)
-            return Input.GetMouseButton(0);
-
-        return Input.GetMouseButtonDown(0);
+        // I mirror the input logic: hold for rifles, click otherwise
+        return type == WeaponData.WeaponType.Rifle
+            ? Input.GetMouseButton(0)
+            : Input.GetMouseButtonDown(0);
     }
 
-    private void StartShootingDisplay()
+    private void OnActualFire()
     {
-        if (shootingDisplayCoroutine != null)
-            StopCoroutine(shootingDisplayCoroutine);
+        // I cancel any existing flash and start a new one
+        if (shootingCoroutine != null)
+            StopCoroutine(shootingCoroutine);
 
-        var duration = GetShootingDisplayDuration(WeaponManager.CurrentWeapon.weaponType);
-        shootingDisplayCoroutine = StartCoroutine(ShootingDisplayCoroutine(duration));
+        StartShootingFlash();
     }
 
-    private float GetShootingDisplayDuration(WeaponData.WeaponType weaponType)
+    // I show the Shooting icon then revert after a delay
+    private void StartShootingFlash()
     {
-        return weaponType == WeaponData.WeaponType.Rifle
+        isShowingShootingState = true;
+        SetWeaponState(WeaponState.Shooting);
+
+        float duration = WeaponManager.CurrentWeapon.weaponType == WeaponData.WeaponType.Rifle
             ? 0.1f
-            : shootingStateDisplayDuration;
+            : shootingFlashDuration;
+
+        shootingCoroutine = StartCoroutine(ShootingFlashRoutine(duration));
     }
 
-    private IEnumerator ShootingDisplayCoroutine(float displayDuration)
+    private IEnumerator ShootingFlashRoutine(float duration)
     {
-        isInShootingDisplayMode = true;
-        UpdateWeaponState(WeaponState.Shooting);
+        yield return new WaitForSeconds(duration);
+        isShowingShootingState = false;
+        shootingCoroutine = null;
 
-        yield return new WaitForSeconds(displayDuration);
-
-        isInShootingDisplayMode = false;
-
-        var postState = DetermineCurrentWeaponState();
-        if (postState == WeaponState.Shooting)
+        // If still holding rifle fire, stay Shooting
+        if (WeaponManager.CurrentWeapon.weaponType == WeaponData.WeaponType.Rifle
+            && Input.GetMouseButton(0))
         {
-            // For rifles, if still holding, stay Shooting
-            if (WeaponManager.CurrentWeapon.weaponType == WeaponData.WeaponType.Rifle &&
-                Input.GetMouseButton(0))
-            {
-                UpdateWeaponState(WeaponState.Shooting);
-            }
-            else
-            {
-                UpdateWeaponState(WeaponState.Idle);
-            }
+            SetWeaponState(WeaponState.Shooting);
         }
         else
         {
-            UpdateWeaponState(postState);
+            SetWeaponState(DetermineState());
         }
-
-        shootingDisplayCoroutine = null;
     }
 
-    private bool IsWeaponRanged(WeaponData.WeaponType weaponType)
+    private void OnWeaponSwitch(WeaponData _)
     {
-        return weaponType == WeaponData.WeaponType.Pistol ||
-               weaponType == WeaponData.WeaponType.Rifle ||
-               weaponType == WeaponData.WeaponType.RPG;
+        // I cancel any flash on weapon switch and go Idle
+        if (shootingCoroutine != null)
+            StopCoroutine(shootingCoroutine);
+
+        isShowingShootingState = false;
+        SetWeaponState(WeaponState.Idle);
     }
 
-    private void UpdateWeaponState(WeaponState newState)
+    private void OnFirstPersonToggle(bool isFP)
     {
-        if (newState == previousState) return;
-        previousState = newState;
+        if (!isFP)
+        {
+            // On exit from first-person, cancel flash and Idle
+            if (shootingCoroutine != null)
+            {
+                StopCoroutine(shootingCoroutine);
+                shootingCoroutine = null;
+            }
+            isShowingShootingState = false;
+            SetWeaponState(WeaponState.Idle);
+        }
+        else
+        {
+            // On re-entry, re-evaluate immediately
+            SetWeaponState(DetermineState());
+        }
+    }
+
+    // I centralize the OnWeaponFired and switch cleanup
+    private void OnDestroy()
+    {
+        FirstPersonShooter.OnWeaponFired -= OnActualFire;
+        WeaponManager.OnWeaponSwitched -= OnWeaponSwitch;
+        CameraSwitcher.OnFirstPersonToggled -= OnFirstPersonToggle;
+
+        if (shootingCoroutine != null)
+            StopCoroutine(shootingCoroutine);
+
+        OnWeaponStateChanged = null;
+    }
+
+    // I change state only when it differs to avoid redundant events
+    private void SetWeaponState(WeaponState newState)
+    {
+        if (newState == lastState) return;
+        lastState = newState;
         CurrentWeaponState = newState;
         OnWeaponStateChanged?.Invoke(newState);
     }
 
-    private void OnDestroy()
-    {
-        // Clean up coroutine and event subscriptions
-        if (shootingDisplayCoroutine != null)
-            StopCoroutine(shootingDisplayCoroutine);
-
-        CameraSwitcher.OnFirstPersonToggled -= HandleFirstPersonToggled;
-        OnWeaponStateChanged = null;
-    }
 }

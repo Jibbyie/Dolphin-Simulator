@@ -4,8 +4,8 @@ public class GameManager : MonoBehaviour
 {
     private void Awake()
     {
-        Cursor.visible = false;
-        // Lock the cursor to the center of the screen
+        // I lock and hide the cursor globally at game start
         Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 }

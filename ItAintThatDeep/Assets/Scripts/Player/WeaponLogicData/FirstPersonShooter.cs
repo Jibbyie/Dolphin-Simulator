@@ -1,35 +1,38 @@
-using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
+using static WeaponData;
 
 public class FirstPersonShooter : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Camera fpCamera;
-    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private Camera firstPersonCamera;       // I store the player’s camera reference
+    [SerializeField] private AudioSource weaponAudioSource;   // I play firing and reload sounds here
 
     [Header("Layer Masking")]
-    [Tooltip("Which layers should be hittable (e.g. only the Target layer)")]
-    [SerializeField] private LayerMask targetLayerMask;
+    [Tooltip("Layers that can be hit by weapons")]
+    [SerializeField] private LayerMask hittableLayers;        // I use this to filter raycasts/spherecasts
 
+    [Header("Current Ammo & Timing")]
+    [SerializeField] private int magazineAmmoCount;           // I track bullets in the current magazine
+    [SerializeField] private int reserveAmmoCount;            // I track bullets in reserve
+    [SerializeField] private float nextFireTimestamp = 0f;    // I enforce the fire rate cooldown
+    [SerializeField] private bool isReloading = false;        // I prevent firing while reloading
 
-    [Header("Runtime Weapon State")]
-    [SerializeField] private int currentMagazineCount;
-    [SerializeField] private int currentReserveMagazineCount;
-    [SerializeField] private float nextAllowedFireTime = 0f;
-    [SerializeField] private bool isReloading = false;
+    // I remember ammo counts per weapon to restore when switching
+    private struct AmmoState { public int magazine; public int reserve; }
+    private readonly Dictionary<WeaponData, AmmoState> ammoStatesByWeapon = new();
 
-    // Struct & lookup to remember ammo per weapon
-    private struct AmmoState { public int Magazine; public int Reserve; }
-    private readonly Dictionary<WeaponData, AmmoState> ammoStateLookup = new Dictionary<WeaponData, AmmoState>();
+    // I signal to UI that a shot has successfully fired
+    public static event Action OnWeaponFired;
 
     private void Start()
     {
+        // I listen for weapon switches to seed or restore ammo
         WeaponManager.OnWeaponSwitched += HandleWeaponSwitched;
         if (WeaponManager.CurrentWeapon != null)
-        {
             HandleWeaponSwitched(WeaponManager.CurrentWeapon);
-        }
     }
 
     private void OnDestroy()
@@ -39,194 +42,211 @@ public class FirstPersonShooter : MonoBehaviour
 
     private void Update()
     {
-        if (!CameraSwitcher.IsFirstPersonActive) return;
-        if (WeaponManager.CurrentWeapon == null) return;
-        ProcessInput();
+        // I only process input when in first-person and a weapon is equipped
+        if (!CameraSwitcher.IsFirstPersonActive || WeaponManager.CurrentWeapon == null)
+            return;
+
+        ProcessPlayerInput();
     }
 
-    private void ProcessInput()
+    // I check for reload or fire inputs each frame
+    private void ProcessPlayerInput()
     {
-        WeaponData currentWeaponData = WeaponManager.CurrentWeapon;
+        var weaponData = WeaponManager.CurrentWeapon;
 
-        // Check for reload input
-        if (Input.GetKeyDown(KeyCode.R) && IsWeaponRanged(currentWeaponData.weaponType))
+        // Reload key pressed
+        if (Input.GetKeyDown(KeyCode.R) && IsRangedWeapon(weaponData.weaponType))
         {
             AttemptReload();
             return;
         }
 
-        // Determine fire input based on weapon type
-        bool isFirePressed = (currentWeaponData.weaponType == WeaponData.WeaponType.Rifle)
-            ? Input.GetMouseButton(0)    // hold to fire automatic rifles
-            : Input.GetMouseButtonDown(0); // single-fire weapons
+        // Determine firing input based on weapon type
+        bool fireInput = weaponData.weaponType == WeaponData.WeaponType.Rifle
+            ? Input.GetMouseButton(0)         // hold for automatic fire
+            : Input.GetMouseButtonDown(0);    // click for single shots
 
-        if (isFirePressed)
-        {
-            AttemptFire(currentWeaponData);
-        }
+        if (fireInput)
+            AttemptFire(weaponData);
     }
 
-    private void AttemptFire(WeaponData currentWeaponData)
+    // I handle firing logic: cooldown and ammo checks
+    private void AttemptFire(WeaponData weaponData)
     {
-        // Check cooldown and reload status
-        if (Time.time < nextAllowedFireTime || isReloading) return;
+        // Respect fire rate and reload state
+        if (Time.time < nextFireTimestamp || isReloading)
+            return;
 
-        bool isRanged = IsWeaponRanged(currentWeaponData.weaponType);
-        bool isMelee = (currentWeaponData.weaponType == WeaponData.WeaponType.Melee ||
-                        currentWeaponData.weaponType == WeaponData.WeaponType.Slap);
-
-        // Ranged weapons need ammo
-        if (isRanged)
+        if (IsRangedWeapon(weaponData.weaponType))
         {
-            if (currentMagazineCount <= 0)
+            // Auto-reload if out of bullets
+            if (magazineAmmoCount <= 0)
             {
-                AttemptReload(); // auto-reload when magazine empty
+                AttemptReload();
                 return;
             }
 
-            // Consume one bullet and update stored state
-            currentMagazineCount--;
-            AmmoState storedState = ammoStateLookup[currentWeaponData];
-            storedState.Magazine = currentMagazineCount;
-            ammoStateLookup[currentWeaponData] = storedState;
+            // I consume one bullet from the magazine
+            magazineAmmoCount--;
+            var savedState = ammoStatesByWeapon[weaponData];
+            savedState.magazine = magazineAmmoCount;
+            ammoStatesByWeapon[weaponData] = savedState;
         }
 
-        // Perform the shot
-        FireWeapon(currentWeaponData);
+        FireWeapon(weaponData);
     }
 
-    private void FireWeapon(WeaponData currentWeaponData)
+    // I perform the shot: cooldown timestamp, audio, damage, and auto-reload
+    private void FireWeapon(WeaponData weaponData)
     {
-        nextAllowedFireTime = Time.time + (1f / currentWeaponData.fireRate);
+        nextFireTimestamp = Time.time + 1f / weaponData.fireRate;
+        OnWeaponFired?.Invoke();
 
-        if (currentWeaponData.shootSFX != null)
-        {
-            audioSource.PlayOneShot(currentWeaponData.shootSFX);
-        }
+        if (weaponData.shootSFX != null)
+            weaponAudioSource.PlayOneShot(weaponData.shootSFX);
 
-        PerformDamageRaycast(currentWeaponData);
+        PerformDamageRaycast(weaponData);
 
-        // Auto-reload
-        if (IsWeaponRanged(currentWeaponData.weaponType)
-            && currentMagazineCount <= 0
-            && currentReserveMagazineCount > 0)
+        // Auto-reload when magazine is empty but reserve has ammo
+        if (IsRangedWeapon(weaponData.weaponType)
+            && magazineAmmoCount <= 0
+            && reserveAmmoCount > 0)
         {
             AttemptReload();
         }
     }
 
+    // I start the reload coroutine if possible
     private void AttemptReload()
     {
-        // Cannot reload if already reloading or no reserve magazines
-        if (isReloading || currentReserveMagazineCount <= 0) return;
+        if (isReloading || reserveAmmoCount <= 0)
+            return;
 
-        WeaponData currentWeaponData = WeaponManager.CurrentWeapon;
-        if (currentMagazineCount >= currentWeaponData.magazineSize) return;
+        var weaponData = WeaponManager.CurrentWeapon;
+        if (magazineAmmoCount >= weaponData.magazineSize)
+            return;
 
-        StartCoroutine(ReloadCoroutine(currentWeaponData));
+        StartCoroutine(ReloadRoutine(weaponData));
     }
 
-    private IEnumerator ReloadCoroutine(WeaponData currentWeaponData)
+    // I wait for reloadTime, then transfer ammo from reserve to magazine
+    private IEnumerator ReloadRoutine(WeaponData weaponData)
     {
         isReloading = true;
-        if (currentWeaponData.reloadSFX != null)
-        {
-            audioSource.PlayOneShot(currentWeaponData.reloadSFX);
-        }
-        yield return new WaitForSeconds(currentWeaponData.reloadTime);
+        if (weaponData.reloadSFX != null)
+            weaponAudioSource.PlayOneShot(weaponData.reloadSFX);
 
-        int bulletsNeeded = currentWeaponData.magazineSize - currentMagazineCount;
-        int bulletsToReload = Mathf.Min(bulletsNeeded, currentReserveMagazineCount);
+        yield return new WaitForSeconds(weaponData.reloadTime);
 
-        currentMagazineCount += bulletsToReload;
-        currentReserveMagazineCount -= bulletsToReload;
+        int needed = weaponData.magazineSize - magazineAmmoCount;
+        int toLoad = Mathf.Min(needed, reserveAmmoCount);
 
-        // Persist updated ammo counts
-        AmmoState storedState = ammoStateLookup[currentWeaponData];
-        storedState.Magazine = currentMagazineCount;
-        storedState.Reserve = currentReserveMagazineCount;
-        ammoStateLookup[currentWeaponData] = storedState;
+        magazineAmmoCount += toLoad;
+        reserveAmmoCount -= toLoad;
+
+        var savedState = ammoStatesByWeapon[weaponData];
+        savedState.magazine = magazineAmmoCount;
+        savedState.reserve = reserveAmmoCount;
+        ammoStatesByWeapon[weaponData] = savedState;
 
         isReloading = false;
     }
 
-    private void PerformDamageRaycast(WeaponData currentWeaponData)
+    // I handle applying damage based on weapon type (single target or splash) and respect enemy immunities
+    private void PerformDamageRaycast(WeaponData weaponData)
     {
-        Ray ray = new Ray(fpCamera.transform.position, fpCamera.transform.forward);
+        // I define the ray origin and direction from the player camera
+        Vector3 rayOrigin = firstPersonCamera.transform.position;
+        Vector3 rayDirection = firstPersonCamera.transform.forward;
+        Ray attackRay = new Ray(rayOrigin, rayDirection);
 
-        // If it’s an RPG, do a sphere cast and hit everything in that volume
-        if (currentWeaponData.weaponType == WeaponData.WeaponType.RPG)
+        float damageAmount = weaponData.damage;
+        DamageType damageType = weaponData.damageType;
+
+        // I only apply damage and trigger hit reactions if the target is not immune
+        void ApplyDamageIfVulnerable(DamageReciever receiver, RaycastHit hitInfo)
         {
-            // SphereCastAll returns all hits along the ray within the given radius
-            RaycastHit[] hits = Physics.SphereCastAll(
-                ray,
-                currentWeaponData.sphereCastRadius,
-                currentWeaponData.range
+            // I skip both damage and flashing if this damageType is listed as immune
+            if (receiver.DamageTypeImmunities.Contains(damageType))
+                return;
+
+            // I apply the damage to the receiver
+            receiver.RecieveDamage(damageAmount, damageType);
+
+            // I notify any hit reactable component to trigger flash or other VFX
+            if (hitInfo.collider.TryGetComponent<IHitReactable>(out var reaction))
+                reaction.OnHit(hitInfo);
+        }
+
+        if (weaponData.weaponType == WeaponData.WeaponType.RPG)
+        {
+            // I deal splash damage via a sphere cast
+            RaycastHit[] splashHits = Physics.SphereCastAll(
+                attackRay,
+                weaponData.sphereCastRadius,
+                weaponData.range,
+                hittableLayers
             );
 
-            foreach (var hit in hits)
+            foreach (var hitInfo in splashHits)
             {
-                if (hit.collider.TryGetComponent<DamageReciever>(out var damageReceiver))
-                    damageReceiver.RecieveDamage(currentWeaponData.damage, currentWeaponData.damageType);
+                // I ignore myself
+                if (hitInfo.collider.gameObject == gameObject)
+                    continue;
 
-                if (hit.collider.TryGetComponent<IHitReactable>(out var reactable))
-                    reactable.OnHit(hit);
+                // I apply damage only if the object has a DamageReciever
+                if (hitInfo.collider.TryGetComponent<DamageReciever>(out var receiver))
+                    ApplyDamageIfVulnerable(receiver, hitInfo);
             }
         }
         else
         {
-            if (Physics.Raycast(ray, out RaycastHit hitInfo, currentWeaponData.range, targetLayerMask))
+            // I deal direct damage via a single raycast
+            if (Physics.Raycast(attackRay, out var hitInfo, weaponData.range, hittableLayers)
+                && hitInfo.collider.TryGetComponent<DamageReciever>(out var receiver))
             {
-                if (hitInfo.collider.TryGetComponent<DamageReciever>(out var damageReceiver))
-                    damageReceiver.RecieveDamage(currentWeaponData.damage, currentWeaponData.damageType);
-
-                if (hitInfo.collider.TryGetComponent<IHitReactable>(out var reactable))
-                    reactable.OnHit(hitInfo);
+                ApplyDamageIfVulnerable(receiver, hitInfo);
             }
         }
     }
 
-
-    private bool IsWeaponRanged(WeaponData.WeaponType type)
-    {
-        return type == WeaponData.WeaponType.Pistol ||
-               type == WeaponData.WeaponType.Rifle ||
-               type == WeaponData.WeaponType.RPG;
-    }
-
+    // I reset ammo and state when the player switches weapons
     private void HandleWeaponSwitched(WeaponData newWeapon)
     {
         StopAllCoroutines();
         isReloading = false;
 
-        // Seed or restore ammo state
-        if (IsWeaponRanged(newWeapon.weaponType))
+        if (IsRangedWeapon(newWeapon.weaponType))
         {
-            if (!ammoStateLookup.TryGetValue(newWeapon, out AmmoState storedState))
+            if (!ammoStatesByWeapon.TryGetValue(newWeapon, out AmmoState savedState))
             {
-                storedState = new AmmoState
+                savedState = new AmmoState
                 {
-                    Magazine = newWeapon.magazineSize,
-                    Reserve = newWeapon.clipSize
+                    magazine = newWeapon.magazineSize,
+                    reserve = newWeapon.clipSize
                 };
-                ammoStateLookup[newWeapon] = storedState;
+                ammoStatesByWeapon[newWeapon] = savedState;
             }
-
-            currentMagazineCount = storedState.Magazine;
-            currentReserveMagazineCount = storedState.Reserve;
+            magazineAmmoCount = savedState.magazine;
+            reserveAmmoCount = savedState.reserve;
         }
         else
         {
-            // Melee/Slap have infinite uses
-            currentMagazineCount = 0;
-            currentReserveMagazineCount = 0;
+            magazineAmmoCount = 0;
+            reserveAmmoCount = 0;
         }
 
-        nextAllowedFireTime = 0f;
+        nextFireTimestamp = 0f;
     }
 
-    // Expose for UI
-    public int GetCurrentMagazineCount() => currentMagazineCount;
-    public int GetCurrentReserveMagazineCount() => currentReserveMagazineCount;
+    // I define what counts as a ranged weapon in one central place
+    public static bool IsRangedWeapon(WeaponData.WeaponType type) =>
+        type == WeaponData.WeaponType.Pistol ||
+        type == WeaponData.WeaponType.Rifle ||
+        type == WeaponData.WeaponType.RPG;
+
+    // I expose ammo and reload state for UI
+    public int GetMagazineAmmo() => magazineAmmoCount;
+    public int GetReserveAmmo() => reserveAmmoCount;
     public bool GetIsReloading() => isReloading;
 }

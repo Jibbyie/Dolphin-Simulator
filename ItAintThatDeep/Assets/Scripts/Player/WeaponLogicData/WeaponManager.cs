@@ -1,63 +1,87 @@
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 
 public class WeaponManager : MonoBehaviour
 {
-    [SerializeField] private List<WeaponData> availableWeapons = new List<WeaponData>();
+    [Header("Available Weapons")]
+    [SerializeField] private List<WeaponData> weaponInventory = new List<WeaponData>();
+    // I track the currently equipped weapon for all other systems
     public static WeaponData CurrentWeapon { get; private set; }
-    public static WeaponData DamageType { get; private set; }
-    public static event System.Action<WeaponData> OnWeaponSwitched;
-    [SerializeField] private AudioSource audioSource;
 
-    private int currentIndex = 0;
+    // I notify subscribers when the player switches weapons
+    public static event Action<WeaponData> OnWeaponSwitched;
+
+    [Header("Audio on Weapon Switch")]
+    [SerializeField] private AudioSource switchAudioSource;    // I play the equip sound here
+
+    // I remember which index in the inventory is currently equipped
+    private int equippedWeaponIndex = 0;
+
     private void Awake()
     {
-        if (audioSource == null)
-            audioSource = GetComponent<AudioSource>();
+        // I ensure I have an AudioSource to play switch sounds
+        if (switchAudioSource == null)
+            switchAudioSource = GetComponent<AudioSource>();
     }
 
     private void Start()
     {
-        currentIndex = 0;
-        EquipAtIndex(currentIndex);
+        // I default to the first weapon in the list
+        equippedWeaponIndex = 0;
+        EquipWeaponAtIndex(equippedWeaponIndex);
     }
 
     private void OnDestroy()
     {
+        // I clear subscribers to avoid dangling references
         OnWeaponSwitched = null;
     }
 
     private void Update()
     {
+        // I only handle weapon input in first-person mode
         if (!CameraSwitcher.IsFirstPersonActive)
             return;
 
-        for (int i = 0; i < availableWeapons.Count; i++)
+        // Number key quick-select: 1 for first, 2 for second, etc.
+        for (int index = 0; index < weaponInventory.Count; index++)
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+            if (Input.GetKeyDown(KeyCode.Alpha1 + index))
             {
-                EquipAtIndex(i);
+                EquipWeaponAtIndex(index);
+                return; // I process only one equip per frame
             }
         }
 
-        // (Optional) Mouse-wheel cycling:
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (scroll > 0) EquipAtIndex((currentIndex + 1) % availableWeapons.Count);
-        if (scroll < 0) EquipAtIndex((currentIndex - 1 + availableWeapons.Count) % availableWeapons.Count);
+        // Mouse wheel cycling: scroll up = next, scroll down = previous
+        float scrollDelta = Input.GetAxis("Mouse ScrollWheel");
+        if (scrollDelta > 0f)
+        {
+            EquipWeaponAtIndex((equippedWeaponIndex + 1) % weaponInventory.Count);
+        }
+        else if (scrollDelta < 0f)
+        {
+            int previousIndex = (equippedWeaponIndex - 1 + weaponInventory.Count) % weaponInventory.Count;
+            EquipWeaponAtIndex(previousIndex);
+        }
     }
 
-    private void EquipAtIndex(int i)
+    // I equip the weapon at the given inventory index, play sound, and broadcast
+    private void EquipWeaponAtIndex(int index)
     {
-        if (i < 0 || i >= availableWeapons.Count) return; // there's no weapons to equip, return
+        if (index < 0 || index >= weaponInventory.Count)
+            return; // I ignore invalid indices
 
-        currentIndex = i;
-        CurrentWeapon = availableWeapons[i];
-        Debug.Log($"Equipped: {CurrentWeapon.weaponName}");
+        equippedWeaponIndex = index;
+        CurrentWeapon = weaponInventory[index];
+        Debug.Log($"Equipped weapon: {CurrentWeapon.weaponName}");
 
-        if (audioSource != null && CurrentWeapon.switchSFX != null)
-            audioSource.PlayOneShot(CurrentWeapon.switchSFX);
+        // I play the switch sound if assigned
+        if (switchAudioSource != null && CurrentWeapon.switchSFX != null)
+            switchAudioSource.PlayOneShot(CurrentWeapon.switchSFX);
 
+        // I notify any systems watching for weapon changes
         OnWeaponSwitched?.Invoke(CurrentWeapon);
     }
-
 }

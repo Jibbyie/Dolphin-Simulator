@@ -3,48 +3,62 @@ using Unity.Cinemachine;
 
 public class CameraSwitcher : MonoBehaviour
 {
-    [SerializeField] private CinemachineCamera isoCam;
-    [SerializeField] private CinemachineCamera fpCam;
-    [SerializeField] private PlayerMovement isoMovement;
-    [SerializeField] private FirstPersonController fpMovement;
-    [SerializeField] private Camera mainCamera;
-    [SerializeField] private GameObject firstPersonCanvas;
+    [Header("Camera & Movement References")]
+    [SerializeField] private CinemachineCamera isometricCamera;    // I set priority for the 2D isometric view
+    [SerializeField] private CinemachineCamera firstPersonCamera;  // I set priority for the first-person view
+    [SerializeField] private PlayerMovement isometricMovement;     // I enable/disable isometric movement
+    [SerializeField] private FirstPersonController firstPersonMovement; // I enable/disable FPS movement
+    [SerializeField] private Camera mainUnityCamera;              // I switch between orthographic and perspective
+    [SerializeField] private GameObject firstPersonUI;            // I toggle the FPS UI elements
+
     public static bool IsFirstPersonActive { get; private set; }
     public static event System.Action<bool> OnFirstPersonToggled;
 
-    private bool usingFP = false;
+    private bool useFirstPerson = false;  // I track whether FPS mode is active
 
-    void Awake()
+    private void Awake()
     {
-        SetMode(false); // Start in isometric mode
+        // I start the game in isometric mode by default
+        SetFirstPersonMode(false);
     }
 
-    void Update()
+    private void Update()
     {
-        if (Input.GetMouseButtonDown(1)) // Right-click toggles mode
+        // I listen for right-click to toggle between camera modes
+        if (Input.GetMouseButtonDown(1))
         {
-            usingFP = !usingFP;
-            SetMode(usingFP);
+            useFirstPerson = !useFirstPerson;
+            SetFirstPersonMode(useFirstPerson);
         }
     }
-    private void SetMode(bool firstPerson)
+
+    /// <summary>
+    /// I switch cameras, movement scripts, projection, UI, and keep the cursor locked and hidden.
+    /// </summary>
+    private void SetFirstPersonMode(bool enableFirstPerson)
     {
-        IsFirstPersonActive = firstPerson;
+        IsFirstPersonActive = enableFirstPerson;
 
-        isoCam.Priority = firstPerson ? 10 : 20;
-        fpCam.Priority = firstPerson ? 20 : 10;
+        // I adjust Cinemachine priorities to activate the correct camera
+        isometricCamera.Priority = enableFirstPerson ? 10 : 20;
+        firstPersonCamera.Priority = enableFirstPerson ? 20 : 10;
 
-        isoMovement.enabled = !firstPerson;
-        fpMovement.enabled = firstPerson;
+        // I enable or disable movement components based on mode
+        isometricMovement.enabled = !enableFirstPerson;
+        firstPersonMovement.enabled = enableFirstPerson;
 
-        mainCamera.orthographic = !firstPerson;
+        // I switch camera projection: ortho for iso, perspective for FPS
+        mainUnityCamera.orthographic = !enableFirstPerson;
 
-        Cursor.lockState = firstPerson ? CursorLockMode.Locked : CursorLockMode.None;
-        Cursor.visible = !firstPerson;
+        // I ensure the cursor stays locked and invisible regardless of mode
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
 
-        if (firstPersonCanvas != null)
-            firstPersonCanvas.SetActive(firstPerson);
+        // I toggle the FPS-specific UI container
+        if (firstPersonUI != null)
+            firstPersonUI.SetActive(enableFirstPerson);
 
-        OnFirstPersonToggled?.Invoke(firstPerson);
+        // I broadcast the toggle event
+        OnFirstPersonToggled?.Invoke(enableFirstPerson);
     }
 }

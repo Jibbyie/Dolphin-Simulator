@@ -1,197 +1,170 @@
+// FirstPersonUIController.cs
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 public class FirstPersonUIController : MonoBehaviour
 {
-    [Header("Weapon Info Display")]
-    [SerializeField] private TextMeshProUGUI weaponNameText;
-    [SerializeField] private TextMeshProUGUI currentMagazineText;
-    [SerializeField] private TextMeshProUGUI currentClipText;
+    [Header("UI References")]
+    [SerializeField] private TextMeshProUGUI weaponNameLabel;        // I display the current weapon's name here
+    [SerializeField] private TextMeshProUGUI magazineCountLabel;     // I show bullets left in magazine here
+    [SerializeField] private TextMeshProUGUI reserveCountLabel;      // I show bullets left in reserve here
 
-    [Header("UI Layout (Optional)")]
-    [SerializeField] private GameObject weaponInfoPanel;
+    [Header("Optional Layout Panel")]
+    [SerializeField] private GameObject weaponInfoContainer;         // I toggle this panel on/off with camera switch
 
-    private FirstPersonShooter shooterReference;
+    private FirstPersonShooter shooter;                               // I pull ammo data from this component
 
     private void Awake()
     {
-        shooterReference = FindFirstObjectByType<FirstPersonShooter>();
-        if (shooterReference == null)
-        {
-            Debug.LogError("FirstPersonUIController: Could not find FirstPersonShooter component!");
-        }
+        // I cache reference to the shooter for ammo info
+        shooter = FindFirstObjectByType<FirstPersonShooter>();
+        if (shooter == null)
+            Debug.LogError("FirstPersonUIController: Shooter component not found!");
 
-        RefreshWeaponInfoDisplay();
+        UpdateFullWeaponDisplay();
     }
 
     private void OnEnable()
     {
-        WeaponManager.OnWeaponSwitched += HandleWeaponSwitched;
-        CameraSwitcher.OnFirstPersonToggled += HandleFirstPersonToggled;
+        // I listen for weapon switches and camera toggles
+        WeaponManager.OnWeaponSwitched += OnWeaponSwitched;
+        CameraSwitcher.OnFirstPersonToggled += OnCameraToggled;
 
-        RefreshWeaponInfoDisplay();
+        UpdateFullWeaponDisplay();
     }
 
     private void OnDisable()
     {
-        WeaponManager.OnWeaponSwitched -= HandleWeaponSwitched;
-        CameraSwitcher.OnFirstPersonToggled -= HandleFirstPersonToggled;
+        // I clean up my event subscriptions
+        WeaponManager.OnWeaponSwitched -= OnWeaponSwitched;
+        CameraSwitcher.OnFirstPersonToggled -= OnCameraToggled;
     }
 
     private void Update()
     {
-        // Update ammo display continuously for real-time feedback
+        // I update ammo counts each frame when in first-person and a weapon is equipped
         if (CameraSwitcher.IsFirstPersonActive && WeaponManager.CurrentWeapon != null)
         {
-            UpdateAmmoDisplay();
+            RefreshAmmoDisplay();
         }
     }
 
-    private void HandleWeaponSwitched(WeaponData newWeapon)
+    // I update all UI fields: name and ammo
+    private void UpdateFullWeaponDisplay()
     {
-        RefreshWeaponInfoDisplay();
-    }
-
-    private void HandleFirstPersonToggled(bool isFirstPersonActive)
-    {
-        if (weaponInfoPanel != null)
+        var weapon = WeaponManager.CurrentWeapon;
+        if (weapon != null)
         {
-            weaponInfoPanel.SetActive(isFirstPersonActive);
+            DisplayWeaponName(weapon.weaponName);
+            RefreshAmmoDisplay();
         }
         else
         {
-            gameObject.SetActive(isFirstPersonActive);
-        }
-
-        if (isFirstPersonActive)
-        {
-            RefreshWeaponInfoDisplay();
+            ClearDisplay();
         }
     }
 
-    private void RefreshWeaponInfoDisplay()
+    // I set the weapon name text
+    private void DisplayWeaponName(string name)
     {
-        WeaponData currentWeapon = WeaponManager.CurrentWeapon;
+        if (weaponNameLabel != null)
+            weaponNameLabel.text = name;
+    }
 
-        if (currentWeapon != null)
+    // I update magazine and reserve ammo labels depending on weapon type
+    private void RefreshAmmoDisplay()
+    {
+        if (shooter == null) return;
+        var weapon = WeaponManager.CurrentWeapon;
+        bool isRanged = weapon.weaponType == WeaponData.WeaponType.Pistol
+                      || weapon.weaponType == WeaponData.WeaponType.Rifle
+                      || weapon.weaponType == WeaponData.WeaponType.RPG;
+
+        if (isRanged)
         {
-            UpdateWeaponNameDisplay(currentWeapon);
-            UpdateAmmoDisplay();
+            int magCount = shooter.GetMagazineAmmo();
+            int reserveCount = shooter.GetReserveAmmo();
+            UpdateMagazineLabel(magCount, weapon.magazineSize);
+            UpdateReserveLabel(reserveCount);
         }
         else
         {
-            ClearWeaponInfoDisplay();
+            // I show "Infinite" for melee weapons
+            SetLabelAsInfinite(magazineCountLabel);
+            SetLabelAsInfinite(reserveCountLabel);
         }
     }
 
-    private void UpdateWeaponNameDisplay(WeaponData currentWeapon)
+    // I format magazine label and apply color based on level
+    private void UpdateMagazineLabel(int current, int capacity)
     {
-        if (weaponNameText != null)
+        if (magazineCountLabel == null) return;
+
+        if (capacity > 0)
         {
-            weaponNameText.text = currentWeapon.weaponName;
-        }
-    }
-
-    private void UpdateAmmoDisplay()
-    {
-        if (shooterReference == null || WeaponManager.CurrentWeapon == null) return;
-
-        WeaponData currentWeapon = WeaponManager.CurrentWeapon;
-        bool isRangedWeapon = IsWeaponRanged(currentWeapon.weaponType);
-
-        if (isRangedWeapon)
-        {
-            int currentMagazine = shooterReference.GetCurrentMagazineCount();
-            int currentReserve = shooterReference.GetCurrentReserveMagazineCount();
-
-            UpdateMagazineDisplay(currentMagazine, currentWeapon.magazineSize);
-            UpdateClipDisplay(currentReserve);
+            magazineCountLabel.text = $"{current}/{capacity}";
+            magazineCountLabel.color = current == 0 ? Color.red
+                                       : current <= capacity * 0.3f ? Color.yellow
+                                       : Color.white;
         }
         else
         {
-            // For melee weapons, show infinity or hide ammo display
-            UpdateMagazineDisplay(-1, -1); // -1 indicates infinite/melee
-            UpdateClipDisplay(-1);
+            SetLabelAsInfinite(magazineCountLabel);
         }
     }
 
-    private void UpdateMagazineDisplay(int currentMagazine, int magazineSize)
+    // I format reserve label and apply color based on level
+    private void UpdateReserveLabel(int reserve)
     {
-        if (currentMagazineText != null)
+        if (reserveCountLabel == null) return;
+
+        if (reserve >= 0)
         {
-            if (currentMagazine >= 0 && magazineSize >= 0)
-            {
-                currentMagazineText.text = $"{currentMagazine}/{magazineSize}";
-
-                // Optional: Change color based on ammo level
-                if (currentMagazine == 0)
-                {
-                    currentMagazineText.color = Color.red;
-                }
-                else if (currentMagazine <= magazineSize * 0.3f) // 30% or less
-                {
-                    currentMagazineText.color = Color.yellow;
-                }
-                else
-                {
-                    currentMagazineText.color = Color.white;
-                }
-            }
-            else
-            {
-                currentMagazineText.text = "Infinite"; // Infinite for melee weapons
-                currentMagazineText.color = Color.white;
-            }
+            reserveCountLabel.text = reserve.ToString();
+            reserveCountLabel.color = reserve == 0 ? Color.red
+                                      : reserve <= 10 ? Color.yellow
+                                      : Color.white;
         }
-    }
-
-    private void UpdateClipDisplay(int currentReserve)
-    {
-        if (currentClipText != null)
+        else
         {
-            if (currentReserve >= 0)
-            {
-                currentClipText.text = currentReserve.ToString();
-
-                // Optional: Change color based on reserve ammo level
-                if (currentReserve == 0)
-                {
-                    currentClipText.color = Color.red;
-                }
-                else if (currentReserve <= 10) // Low reserve threshold
-                {
-                    currentClipText.color = Color.yellow;
-                }
-                else
-                {
-                    currentClipText.color = Color.white;
-                }
-            }
-            else
-            {
-                currentClipText.text = "Infinite"; // Infinite for melee weapons
-                currentClipText.color = Color.white;
-            }
+            SetLabelAsInfinite(reserveCountLabel);
         }
     }
 
-    private void ClearWeaponInfoDisplay()
+    // I handle panel visibility when camera toggles
+    private void OnCameraToggled(bool isFirstPerson)
     {
-        if (weaponNameText != null)
-            weaponNameText.text = "No Weapon";
+        if (weaponInfoContainer != null)
+            weaponInfoContainer.SetActive(isFirstPerson);
+        else
+            gameObject.SetActive(isFirstPerson);
 
-        if (currentMagazineText != null)
-            currentMagazineText.text = "0/0";
-
-        if (currentClipText != null)
-            currentClipText.text = "0";
+        if (isFirstPerson)
+            UpdateFullWeaponDisplay();
     }
 
-    private bool IsWeaponRanged(WeaponData.WeaponType weaponType)
+    // I refresh name and ammo when weapon changes
+    private void OnWeaponSwitched(WeaponData newWeapon)
     {
-        return weaponType == WeaponData.WeaponType.Pistol ||
-               weaponType == WeaponData.WeaponType.Rifle ||
-               weaponType == WeaponData.WeaponType.RPG;
+        UpdateFullWeaponDisplay();
+    }
+
+    // I clear all UI to default empty state
+    private void ClearDisplay()
+    {
+        if (weaponNameLabel != null)
+            weaponNameLabel.text = "No Weapon";
+        if (magazineCountLabel != null)
+            magazineCountLabel.text = "";
+        if (reserveCountLabel != null)
+            reserveCountLabel.text = "";
+    }
+
+    // I set a text label to show infinity with default color
+    private void SetLabelAsInfinite(TextMeshProUGUI label)
+    {
+        label.text = "Infinite";
+        label.color = Color.white;
     }
 }

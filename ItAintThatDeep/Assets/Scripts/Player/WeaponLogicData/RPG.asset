@@ -19,10 +19,10 @@ MonoBehaviour:
   shootSFX: {fileID: 8300000, guid: 4668a6e2cacdd904198a0745483f6a18, type: 3}
   sphereCastRadius: 5
   range: 50
-  fireRate: 2
+  fireRate: 0.5
   reloadTime: 3
-  magazineSize: 1
-  clipSize: 5
+  magazineSize: 2
+  clipSize: 3
   switchSFX: {fileID: 0}
   reloadSFX: {fileID: 8300000, guid: 8ccebb149535a034fb66cffad0e73f8f, type: 3}
   emptySFX: {fileID: 8300000, guid: ab91f13c381ff6f49904cb551eebc8cf, type: 3}
