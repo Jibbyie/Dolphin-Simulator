@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3d68a959676aed47a1f67d7290b8c53, type: 3}
+  m_Name: RPG
+  m_EditorClassIdentifier: 
+  weaponName: RPG
+  weaponType: 4
+  damageType: 4
+  damage: 50
+  shootSFX: {fileID: 0}
+  range: 5
+  fireRate: 1
+  reloadTime: 2
+  magazineSize: 5
+  clipSize: 5
+  switchSFX: {fileID: 0}
+  explosionRadius: 20

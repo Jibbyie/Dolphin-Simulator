@@ -9,9 +9,8 @@ public class WeaponManager : MonoBehaviour
     public static event System.Action<WeaponData> OnWeaponSwitched;
     [SerializeField] private AudioSource audioSource;
 
+    [SerializeField] WeaponData weaponData;
     private int currentIndex = 0;
-    [SerializeField] private WeaponData startingWeapon;
-
     private void Awake()
     {
         if (audioSource == null)
@@ -20,8 +19,8 @@ public class WeaponManager : MonoBehaviour
 
     private void Start()
     {
-        currentIndex = 0;
-        EquipAtIndex(currentIndex);
+        //currentIndex = 0;
+        //EquipAtIndex(currentIndex);
     }
 
     private void Update()
@@ -29,18 +28,21 @@ public class WeaponManager : MonoBehaviour
         if (!CameraSwitcher.IsFirstPersonActive)
             return;
 
-        // Cycle slots 1 & 2
-        if (Input.GetKeyDown(KeyCode.Alpha1))
+        for (int i = 0; i < availableWeapons.Count; i++)
         {
-            EquipAtIndex(0);
+            if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+            {
+                EquipAtIndex(i);
+            }
         }
-        if (Input.GetKeyDown(KeyCode.Alpha2) && availableWeapons.Count > 1)
-        {
-            EquipAtIndex(1);
-        }
+
+        // (Optional) Mouse-wheel cycling:
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll > 0) EquipAtIndex((currentIndex + 1) % availableWeapons.Count);
+        if (scroll < 0) EquipAtIndex((currentIndex - 1 + availableWeapons.Count) % availableWeapons.Count);
     }
 
-        private void EquipAtIndex(int i)
+    private void EquipAtIndex(int i)
     {
         if (i < 0 || i >= availableWeapons.Count) return; // there's no weapons to equip, return
 

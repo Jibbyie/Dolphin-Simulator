@@ -11,7 +11,7 @@ public class WeaponData : ScriptableObject
         Rifle,
         RPG
     }
-    
+  
     public enum DamageType
     {
         Slap,
@@ -21,8 +21,8 @@ public class WeaponData : ScriptableObject
         Explosive
     }
 
-    [Header("Common Weapon Settings")]
     public string weaponName;
+    [Header("Common Weapon Settings")]
     public WeaponType weaponType;
     public DamageType damageType;
     public float damage;
@@ -35,7 +35,7 @@ public class WeaponData : ScriptableObject
 
     [Header("Ammo Settings")]
     public int magazineSize; // bullets per magazine
-    public int clipSize; // total magazines carried
+    public int clipSize; // reserve bullets in the clip
 
     [Tooltip("Play this when the player equips this weapon")]
     public AudioClip switchSFX;

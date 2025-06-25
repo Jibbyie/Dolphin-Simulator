@@ -7,7 +7,7 @@ public class FirstPersonUIController : MonoBehaviour
     [Serializable] 
     private struct WeaponUISlot
     {
-        public WeaponData weapon; // the so this icon belongs to
+        public WeaponData weapon; // the scriptable object this icon belongs to
         public GameObject iconGameObject; // the image gameobject under canvas
     }
 
