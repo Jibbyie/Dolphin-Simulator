@@ -9,17 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f05f2b8ef85f53c45aae276ce1dd7a3c, type: 3}
-  m_Name: AR15
+  m_Script: {fileID: 11500000, guid: 593044416e5767446997cd1622209974, type: 3}
+  m_Name: Slap
   m_EditorClassIdentifier: 
-  weaponName: AR15
-  weaponType: 3
-  damageType: 3
-  damage: 5
-  shootSFX: {fileID: 8300000, guid: 971f6f5b9a7dd1746b6fdff69ec05b59, type: 3}
-  range: 30
-  fireRate: 5
-  reloadTime: 5
-  magazineSize: 30
-  clipSize: 30
+  weaponName: Slap
+  weaponType: 0
+  damageType: 0
+  damage: 1
+  shootSFX: {fileID: 8300000, guid: 887562311c280ab468eaf7a5de76915d, type: 3}
+  range: 2
+  fireRate: 2
+  reloadTime: 0
+  magazineSize: 0
+  clipSize: 0
   switchSFX: {fileID: 8300000, guid: 6daf827ecba1cfd47987a8c04d93839e, type: 3}

@@ -1,4 +1,7 @@
 using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 [CreateAssetMenu(menuName = "Weapons/Base WeaponData")]
 public class WeaponData : ScriptableObject
@@ -39,4 +42,5 @@ public class WeaponData : ScriptableObject
 
     [Tooltip("Play this when the player equips this weapon")]
     public AudioClip switchSFX;
+
 }

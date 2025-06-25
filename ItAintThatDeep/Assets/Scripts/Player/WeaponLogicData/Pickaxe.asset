@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3cacf696577fd3e4ba77a853b1669378, type: 3}
-  m_Name: Baseball Bat
+  m_Name: Pickaxe
   m_EditorClassIdentifier: 
-  weaponName: Batty
+  weaponName: Pickaxe
   weaponType: 1
   damageType: 1
   damage: 20
-  shootSFX: {fileID: 0}
-  range: 5
-  fireRate: 0
+  shootSFX: {fileID: 8300000, guid: 887562311c280ab468eaf7a5de76915d, type: 3}
+  range: 2
+  fireRate: 2
   reloadTime: 0
   magazineSize: 0
   clipSize: 0
