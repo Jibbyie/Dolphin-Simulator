@@ -13,7 +13,13 @@ MonoBehaviour:
   m_Name: Pistol
   m_EditorClassIdentifier: 
   weaponName: Pistol
+  weaponType: 2
+  damageType: 2
   damage: 10
-  range: 20
   shootSFX: {fileID: 8300000, guid: 971f6f5b9a7dd1746b6fdff69ec05b59, type: 3}
+  range: 20
+  fireRate: 1
+  reloadTime: 2
+  magazineSize: 10
+  clipSize: 20
   switchSFX: {fileID: 8300000, guid: 6daf827ecba1cfd47987a8c04d93839e, type: 3}

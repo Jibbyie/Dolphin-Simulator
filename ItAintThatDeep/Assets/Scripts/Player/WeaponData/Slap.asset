@@ -13,7 +13,13 @@ MonoBehaviour:
   m_Name: Slap
   m_EditorClassIdentifier: 
   weaponName: Slap
+  weaponType: 0
+  damageType: 0
   damage: 1
-  range: 2
   shootSFX: {fileID: 8300000, guid: 887562311c280ab468eaf7a5de76915d, type: 3}
+  range: 2
+  fireRate: 1
+  reloadTime: 2
+  magazineSize: 5
+  clipSize: 1
   switchSFX: {fileID: 8300000, guid: 6daf827ecba1cfd47987a8c04d93839e, type: 3}

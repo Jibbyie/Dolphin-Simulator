@@ -14,19 +14,28 @@ public class FirstPersonShooter : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0)) // Left click to shoot
         {
-            if(WeaponManager.CurrentWeapon.weaponName == "Slap")
-            {
-                Slap();
-            }
-            else
-            {
-                Shoot();
-            }
+            ApplyDamage();
         }
     }
 
+    void ApplyDamage()
+    {
+        audioSource.PlayOneShot(WeaponManager.CurrentWeapon.shootSFX);
+
+        Ray ray = new Ray(fpCamera.transform.position, fpCamera.transform.forward);
+        if(Physics.Raycast(ray, out var hit, WeaponManager.CurrentWeapon.range))
+        {
+            var col = hit.collider;
+            //Apply damage
+            if(hit.collider.TryGetComponent<DamageReciever>(out var targetToHit))
+            {
+                targetToHit.RecieveDamage(WeaponManager.CurrentWeapon.damage, WeaponManager.CurrentWeapon.damageType);
+            }
+        }
+    }
     void Slap()
     {
+
         audioSource.PlayOneShot(WeaponManager.CurrentWeapon.shootSFX);
 
         // short range raycast
@@ -36,18 +45,12 @@ public class FirstPersonShooter : MonoBehaviour
             var col = hit.collider;
             bool handled = false;
 
-            // First, try any interaction
-            if(col.TryGetComponent<IInteractable>(out var inter))
+            // Apply damage
+            if(hit.collider.TryGetComponent<ISlapable>(out var slapTarget))
             {
-                inter.Interact();
+                bool died = slapTarget.TakeDamage(WeaponManager.CurrentWeapon.damage);
                 handled = true;
-            }
-
-            // then, apply minimal damage if possible
-            if(col.TryGetComponent<IDamageable>(out var dmg))
-            {
-                dmg.TakeDamage(WeaponManager.CurrentWeapon.damage);
-                handled = true;
+                Debug.Log($"Slapped {hit.collider.name}, dealt {WeaponManager.CurrentWeapon.damage} dmg. Died? {died}");
             }
 
             if(!handled)

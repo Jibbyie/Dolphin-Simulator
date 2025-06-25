@@ -5,6 +5,7 @@ public class WeaponManager : MonoBehaviour
 {
     [SerializeField] private List<WeaponData> availableWeapons = new List<WeaponData>();
     public static WeaponData CurrentWeapon { get; private set; }
+    public static WeaponData DamageType { get; private set; }
     public static event System.Action<WeaponData> OnWeaponSwitched;
     [SerializeField] private AudioSource audioSource;
 
