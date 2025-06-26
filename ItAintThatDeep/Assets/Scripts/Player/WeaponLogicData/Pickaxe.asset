@@ -12,14 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cacf696577fd3e4ba77a853b1669378, type: 3}
   m_Name: Pickaxe
   m_EditorClassIdentifier: 
+  weaponIcon: {fileID: 21300000, guid: 4b32be27d6c257246a40455aa2eee86f, type: 3}
   weaponName: Pickaxe
   weaponType: 1
   damageType: 1
   damage: 20
   shootSFX: {fileID: 8300000, guid: 887562311c280ab468eaf7a5de76915d, type: 3}
+  sphereCastRadius: 5
   range: 2
   fireRate: 2
   reloadTime: 0
   magazineSize: 0
   clipSize: 0
   switchSFX: {fileID: 0}
+  reloadSFX: {fileID: 0}
+  emptySFX: {fileID: 0}

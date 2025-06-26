@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f05f2b8ef85f53c45aae276ce1dd7a3c, type: 3}
   m_Name: AR15
   m_EditorClassIdentifier: 
+  weaponIcon: {fileID: 21300000, guid: ee4de373e2a7a3f458725a2d9eafe869, type: 3}
   weaponName: AR15
   weaponType: 3
   damageType: 3

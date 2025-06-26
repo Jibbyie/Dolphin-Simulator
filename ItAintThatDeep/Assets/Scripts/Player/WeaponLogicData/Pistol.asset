@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 593044416e5767446997cd1622209974, type: 3}
   m_Name: Pistol
   m_EditorClassIdentifier: 
+  weaponIcon: {fileID: 21300000, guid: 9ad10d1d4694f8c40ac90252c36891dd, type: 3}
   weaponName: Pistol
   weaponType: 2
   damageType: 2

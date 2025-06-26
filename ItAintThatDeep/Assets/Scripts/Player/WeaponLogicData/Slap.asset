@@ -12,14 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 593044416e5767446997cd1622209974, type: 3}
   m_Name: Slap
   m_EditorClassIdentifier: 
+  weaponIcon: {fileID: 21300000, guid: 8e87d236d0796674f97a723f40b29481, type: 3}
   weaponName: Slap
   weaponType: 0
   damageType: 0
   damage: 1
   shootSFX: {fileID: 8300000, guid: 887562311c280ab468eaf7a5de76915d, type: 3}
+  sphereCastRadius: 5
   range: 2
   fireRate: 2
   reloadTime: 0
   magazineSize: 0
   clipSize: 0
   switchSFX: {fileID: 8300000, guid: 6daf827ecba1cfd47987a8c04d93839e, type: 3}
+  reloadSFX: {fileID: 0}
+  emptySFX: {fileID: 0}

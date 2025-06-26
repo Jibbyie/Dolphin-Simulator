@@ -9,6 +9,7 @@ public class FirstPersonUIController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI weaponNameLabel;        // I display the current weapon's name here
     [SerializeField] private TextMeshProUGUI magazineCountLabel;     // I show bullets left in magazine here
     [SerializeField] private TextMeshProUGUI reserveCountLabel;      // I show bullets left in reserve here
+    [SerializeField] private Image weaponIconImage;         // I show the weapon icon
 
     [Header("Optional Layout Panel")]
     [SerializeField] private GameObject weaponInfoContainer;         // I toggle this panel on/off with camera switch
@@ -57,6 +58,7 @@ public class FirstPersonUIController : MonoBehaviour
         if (weapon != null)
         {
             DisplayWeaponName(weapon.weaponName);
+            DisplayWeaponIcon(weapon.weaponIcon);
             RefreshAmmoDisplay();
         }
         else
@@ -70,6 +72,21 @@ public class FirstPersonUIController : MonoBehaviour
     {
         if (weaponNameLabel != null)
             weaponNameLabel.text = name;
+    }
+
+    private void DisplayWeaponIcon(Sprite icon)
+    {
+        if(weaponIconImage == null) return;
+
+        if (icon != null)
+        {
+            weaponIconImage.sprite = icon;
+            weaponIconImage.enabled = true; // I show the icon if available
+        }
+        else
+        {
+            weaponIconImage.enabled = false; // I hide the icon if not set
+        }
     }
 
     // I update magazine and reserve ammo labels depending on weapon type
@@ -159,6 +176,8 @@ public class FirstPersonUIController : MonoBehaviour
             magazineCountLabel.text = "";
         if (reserveCountLabel != null)
             reserveCountLabel.text = "";
+        if (weaponIconImage != null)
+            weaponIconImage.enabled = false;
     }
 
     // I set a text label to show infinity with default color

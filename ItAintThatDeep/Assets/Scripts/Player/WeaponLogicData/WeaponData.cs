@@ -24,7 +24,10 @@ public class WeaponData : ScriptableObject
         Explosive
     }
 
+    [Header("Weapon Identification")]
+    public Sprite weaponIcon;
     public string weaponName;
+
     [Header("Common Weapon Settings")]
     public WeaponType weaponType;
     public DamageType damageType;
