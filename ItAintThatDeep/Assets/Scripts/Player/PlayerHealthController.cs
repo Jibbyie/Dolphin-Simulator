@@ -83,6 +83,6 @@ public class PlayerHealthController : MonoBehaviour
     // I respond when the player dies; currently I log a message
     private void HandleDeathEvent()
     {
-        Debug.Log($"{name} has died.");
+       
     }
 }
