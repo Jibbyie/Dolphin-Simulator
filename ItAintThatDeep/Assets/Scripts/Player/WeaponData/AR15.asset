@@ -19,7 +19,7 @@ MonoBehaviour:
   damage: 5
   shootSFX: {fileID: 8300000, guid: 971f6f5b9a7dd1746b6fdff69ec05b59, type: 3}
   sphereCastRadius: 1.5
-  range: 30
+  range: 20
   fireRate: 10
   reloadTime: 1
   magazineSize: 30
