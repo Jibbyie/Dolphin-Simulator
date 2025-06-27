@@ -33,6 +33,7 @@ public class DamageReciever : MonoBehaviour
 
     public void RecieveDamage(float amount, WeaponData.DamageType damageType)
     {
+        if (!enabled) return;
         // I skip damage if this damage type is listed in my immunities
         if (DamageTypeImmunities.Contains(damageType))
         {

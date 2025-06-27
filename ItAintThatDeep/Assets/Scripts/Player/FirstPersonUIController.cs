@@ -51,7 +51,7 @@ public class FirstPersonUIController : MonoBehaviour
         }
     }
 
-    // I update all UI fields: name and ammo
+    // I update all UI fields: name, icon and ammo
     private void UpdateFullWeaponDisplay()
     {
         var weapon = WeaponManager.CurrentWeapon;
