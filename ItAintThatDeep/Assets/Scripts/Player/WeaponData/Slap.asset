@@ -18,7 +18,7 @@ MonoBehaviour:
   damageType: 0
   damage: 1
   shootSFX: {fileID: 8300000, guid: 887562311c280ab468eaf7a5de76915d, type: 3}
-  sphereCastRadius: 5
+  sphereCastRadius: 0
   range: 2
   fireRate: 2
   reloadTime: 0

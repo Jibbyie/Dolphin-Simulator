@@ -183,7 +183,7 @@ public class FirstPersonUIController : MonoBehaviour
     // I set a text label to show infinity with default color
     private void SetLabelAsInfinite(TextMeshProUGUI label)
     {
-        label.text = "Infinite";
+        label.text = "\u221E";
         label.color = Color.white;
     }
 }

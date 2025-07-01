@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: Pistol
   m_EditorClassIdentifier: 
   weaponIcon: {fileID: 21300000, guid: 9ad10d1d4694f8c40ac90252c36891dd, type: 3}
-  weaponName: Pistol
+  weaponName: Colt Swimmer .45
   weaponType: 2
   damageType: 2
   damage: 10
   shootSFX: {fileID: 8300000, guid: 971f6f5b9a7dd1746b6fdff69ec05b59, type: 3}
-  sphereCastRadius: 1.5
+  sphereCastRadius: 0
   range: 15
   fireRate: 2
   reloadTime: 1
-  magazineSize: 15
-  clipSize: 15
+  magazineSize: 12
+  clipSize: 40
   switchSFX: {fileID: 8300000, guid: 6daf827ecba1cfd47987a8c04d93839e, type: 3}
   reloadSFX: {fileID: 8300000, guid: 8ccebb149535a034fb66cffad0e73f8f, type: 3}
   emptySFX: {fileID: 8300000, guid: ab91f13c381ff6f49904cb551eebc8cf, type: 3}

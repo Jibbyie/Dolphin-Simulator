@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: AR15
   m_EditorClassIdentifier: 
   weaponIcon: {fileID: 21300000, guid: ee4de373e2a7a3f458725a2d9eafe869, type: 3}
-  weaponName: AR15
+  weaponName: AR-Fin-Teen
   weaponType: 3
   damageType: 3
   damage: 5
   shootSFX: {fileID: 8300000, guid: 971f6f5b9a7dd1746b6fdff69ec05b59, type: 3}
-  sphereCastRadius: 1.5
+  sphereCastRadius: 0
   range: 20
   fireRate: 10
   reloadTime: 1
   magazineSize: 30
-  clipSize: 60
+  clipSize: 120
   switchSFX: {fileID: 8300000, guid: 6daf827ecba1cfd47987a8c04d93839e, type: 3}
   reloadSFX: {fileID: 8300000, guid: 8ccebb149535a034fb66cffad0e73f8f, type: 3}
   emptySFX: {fileID: 8300000, guid: ab91f13c381ff6f49904cb551eebc8cf, type: 3}
