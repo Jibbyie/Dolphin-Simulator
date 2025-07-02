@@ -21,7 +21,7 @@ MonoBehaviour:
   sphereCastRadius: 5
   range: 50
   fireRate: 0.5
-  reloadTime: 3
+  reloadTime: 1
   magazineSize: 2
   clipSize: 3
   switchSFX: {fileID: 0}
