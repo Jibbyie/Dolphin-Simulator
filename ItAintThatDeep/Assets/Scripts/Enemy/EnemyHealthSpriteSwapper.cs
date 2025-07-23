@@ -8,9 +8,9 @@ public class EnemyHealthSpriteSwapper : MonoBehaviour
     private SpriteRenderer spriteRenderer;
 
     [Header("Health Thresholds (fractions of max health)")]
-    [SerializeField, Tooltip("When health  this fraction, I show my original sprite.")]
+    [SerializeField, Tooltip("When health is this fraction, I show my original sprite.")]
     private float highHealthThreshold = 0.75f;
-    [SerializeField, Tooltip("When health  this fraction but  high, I show my mildly hurt sprite.")]
+    [SerializeField, Tooltip("When health is this fraction but  high, I show my mildly hurt sprite.")]
     private float mediumHealthThreshold = 0.40f;
 
     [Header("Health State Sprites")]

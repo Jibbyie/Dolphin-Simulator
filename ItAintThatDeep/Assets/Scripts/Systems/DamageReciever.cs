@@ -7,9 +7,9 @@ public class DamageReciever : MonoBehaviour
 {
     [Header("Health Settings")]
     [SerializeField]
-    private float maxHealth = 100f;                          // I define the maximum health this entity can have
+    private float maxHealth = 100f; // I define the maximum health this entity can have
 
-    private float currentHealth;                             // I track the entity’s current health points
+    private float currentHealth; // I track the entity’s current health points
 
     // I expose current and maximum health for other systems
     public float CurrentHealth => currentHealth;
