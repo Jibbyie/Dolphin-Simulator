@@ -28,9 +28,8 @@ public class FirstPersonUIController : MonoBehaviour
 
     private void OnEnable()
     {
-        // I listen for weapon switches and camera toggles
+        // I listen for weapon switches
         WeaponManager.OnWeaponSwitched += OnWeaponSwitched;
-        CameraSwitcher.OnFirstPersonToggled += OnCameraToggled;
 
         UpdateFullWeaponDisplay();
     }
@@ -39,13 +38,12 @@ public class FirstPersonUIController : MonoBehaviour
     {
         // I clean up my event subscriptions
         WeaponManager.OnWeaponSwitched -= OnWeaponSwitched;
-        CameraSwitcher.OnFirstPersonToggled -= OnCameraToggled;
     }
 
     private void Update()
     {
         // I update ammo counts each frame when in first-person and a weapon is equipped
-        if (CameraSwitcher.IsFirstPersonActive && WeaponManager.CurrentWeapon != null)
+        if (WeaponManager.CurrentWeapon != null)
         {
             RefreshAmmoDisplay();
         }

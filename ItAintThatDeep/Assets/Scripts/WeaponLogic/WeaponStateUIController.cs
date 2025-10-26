@@ -37,7 +37,6 @@ public class WeaponStateUIController : MonoBehaviour
         // I listen for weapon switches, state changes, and camera toggles
         WeaponManager.OnWeaponSwitched += OnWeaponSwitched;
         WeaponStateTracker.OnWeaponStateChanged += OnWeaponStateChanged;
-        CameraSwitcher.OnFirstPersonToggled += OnCameraToggled;
 
         SyncUIWithCurrentWeapon();
     }
@@ -47,7 +46,6 @@ public class WeaponStateUIController : MonoBehaviour
         // I remove all event listeners to avoid memory leaks
         WeaponManager.OnWeaponSwitched -= OnWeaponSwitched;
         WeaponStateTracker.OnWeaponStateChanged -= OnWeaponStateChanged;
-        CameraSwitcher.OnFirstPersonToggled -= OnCameraToggled;
     }
 
     // I translate the inspector list into a dictionary for O(1) lookups
@@ -72,14 +70,6 @@ public class WeaponStateUIController : MonoBehaviour
     private void OnWeaponStateChanged(WeaponStateTracker.WeaponState state)
     {
         RefreshIconsForCurrentState();
-    }
-
-    // I toggle the entire UI panel when entering/exiting first-person
-    private void OnCameraToggled(bool isFirstPerson)
-    {
-        gameObject.SetActive(isFirstPerson);
-        if (isFirstPerson)
-            RefreshIconsForCurrentState();
     }
 
     // I sync UI on startup or re-enable

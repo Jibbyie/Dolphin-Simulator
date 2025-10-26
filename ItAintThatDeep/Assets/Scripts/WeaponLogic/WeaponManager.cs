@@ -40,9 +40,6 @@ public class WeaponManager : MonoBehaviour
 
     private void Update()
     {
-        // I only handle weapon input in first-person mode
-        if (!CameraSwitcher.IsFirstPersonActive)
-            return;
 
         // Number key quick-select: 1 for first, 2 for second, etc.
         for (int index = 0; index < weaponInventory.Count; index++)

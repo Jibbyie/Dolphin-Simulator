@@ -32,14 +32,12 @@ public class WeaponStateTracker : MonoBehaviour
         shooter = FindFirstObjectByType<FirstPersonShooter>();
         if (shooter == null)
             Debug.LogError("WeaponStateTracker: Could not find FirstPersonShooter!");
-
-        CameraSwitcher.OnFirstPersonToggled += OnFirstPersonToggle;
     }
 
     private void Update()
     {
         // I default to Idle when out of first-person or no weapon equipped
-        if (!CameraSwitcher.IsFirstPersonActive || WeaponManager.CurrentWeapon == null)
+        if (WeaponManager.CurrentWeapon == null)
         {
             SetWeaponState(WeaponState.Idle);
             return;
@@ -163,7 +161,6 @@ public class WeaponStateTracker : MonoBehaviour
     {
         FirstPersonShooter.OnWeaponFired -= OnActualFire;
         WeaponManager.OnWeaponSwitched -= OnWeaponSwitch;
-        CameraSwitcher.OnFirstPersonToggled -= OnFirstPersonToggle;
 
         if (shootingCoroutine != null)
             StopCoroutine(shootingCoroutine);

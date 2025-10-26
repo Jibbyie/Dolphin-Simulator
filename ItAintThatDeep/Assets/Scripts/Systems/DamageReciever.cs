@@ -59,5 +59,9 @@ public class DamageReciever : MonoBehaviour
     {
         onDeath?.Invoke();
         Debug.Log($"{name} has died.");
+        enabled = false; // stop taking damage/events
+        Destroy(gameObject); // or delay if you need
     }
+
+    public float GetHealthFraction() { return Mathf.Approximately(maxHealth, 0f) ? 0f : Mathf.Clamp01(currentHealth / maxHealth); }
 }

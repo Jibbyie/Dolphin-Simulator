@@ -43,7 +43,7 @@ public class FirstPersonShooter : MonoBehaviour
     private void Update()
     {
         // I only process input when in first-person and a weapon is equipped
-        if (!CameraSwitcher.IsFirstPersonActive || WeaponManager.CurrentWeapon == null)
+        if (WeaponManager.CurrentWeapon == null)
             return;
 
         ProcessPlayerInput();
@@ -100,6 +100,8 @@ public class FirstPersonShooter : MonoBehaviour
     private void FireWeapon(WeaponData weaponData)
     {
         nextFireTimestamp = Time.time + 1f / weaponData.fireRate;
+        CameraKickAndShake.Fire(weaponData.weaponType);
+
         OnWeaponFired?.Invoke();
 
         if (weaponData.shootSFX != null)
@@ -174,8 +176,14 @@ public class FirstPersonShooter : MonoBehaviour
             receiver.RecieveDamage(damageAmount, damageType);
 
             // I notify any hit reactable component to trigger flash or other VFX
-            if (hitInfo.collider.TryGetComponent<IHitReactable>(out var reaction))
-                reaction.OnHit(hitInfo);
+            var reactables = hitInfo.collider.GetComponents<IHitReactable>();
+            for (int i = 0; i < reactables.Length; i++)
+                reactables[i].OnHit(hitInfo);
+
+            HitStop.Do(0.04f);
+
+            // NEW: per-weapon stronger kick on confirmed hit
+            CameraKickAndShake.Hit(weaponData.weaponType);
         }
 
         if (weaponData.weaponType == WeaponData.WeaponType.RPG)

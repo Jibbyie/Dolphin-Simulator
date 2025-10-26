@@ -4,39 +4,37 @@ using UnityEngine;
 public class FirstPersonController : MonoBehaviour
 {
     [Header("Player Movement Settings")]
-    [SerializeField] private float movementSpeed = 5f;      // I control walking speed
-    [SerializeField] private float lookSensitivity = 2f;    // I control mouse look sensitivity
-    [SerializeField] private Transform cameraPivot;         // I rotate the camera horizontally
+    [SerializeField] private float moveSpeed = 5f;
 
-    private Rigidbody playerRigidbody;                      // I move the player using physics
+    [Header("Sprint")]
+    [SerializeField] private KeyCode sprintKey = KeyCode.LeftShift;
+    [SerializeField] private float sprintMultiplier = 1.6f;
+
+    private Rigidbody rb;
+
+    // Simple global read so other scripts (bob/shake) can react to sprint
+    public static bool IsSprinting { get; private set; }
 
     private void Start()
     {
-        // I cache the Rigidbody for movement
-        playerRigidbody = GetComponent<Rigidbody>();
-
-        // I lock and hide the cursor when entering FPS mode
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-    }
-
-    private void Update()
-    {
-        // I rotate the player horizontally based on mouse X input
-        float horizontalLook = Input.GetAxis("Mouse X") * lookSensitivity;
-        transform.Rotate(Vector3.up * horizontalLook);
+        rb = GetComponent<Rigidbody>();
+        rb.freezeRotation = true;
     }
 
     private void FixedUpdate()
     {
-        // I read WASD/arrow input, convert to world movement, and apply via Rigidbody
-        Vector3 inputDirection = new Vector3(
-            Input.GetAxisRaw("Horizontal"),
-            0,
-            Input.GetAxisRaw("Vertical")
-        ).normalized;
+        float moveX = Input.GetAxisRaw("Horizontal");
+        float moveZ = Input.GetAxisRaw("Vertical");
 
-        Vector3 worldMovement = transform.TransformDirection(inputDirection) * movementSpeed;
-        playerRigidbody.MovePosition(playerRigidbody.position + worldMovement * Time.fixedDeltaTime);
+        Vector3 moveDir = transform.forward * moveZ + transform.right * moveX;
+        moveDir.Normalize();
+
+        // Sprint only when there is movement input
+        bool wantsSprint = Input.GetKey(sprintKey);
+        bool hasInput = Mathf.Abs(moveX) + Mathf.Abs(moveZ) > 0.01f;
+        IsSprinting = wantsSprint && hasInput;
+
+        float speed = moveSpeed * (IsSprinting ? sprintMultiplier : 1f);
+        rb.MovePosition(rb.position + moveDir * speed * Time.fixedDeltaTime);
     }
 }
