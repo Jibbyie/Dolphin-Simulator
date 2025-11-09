@@ -1,6 +1,5 @@
 using UnityEngine;
 
-// Attach to enemy prefab. On this enemy’s death, it notifies the KillChainManager once.
 [RequireComponent(typeof(DamageReciever))]
 public class EnemyKillNotifier : MonoBehaviour
 {
@@ -24,10 +23,14 @@ public class EnemyKillNotifier : MonoBehaviour
 
     private void OnDeath()
     {
-        if (sent) return; // just in case
+        if (sent) return;
         sent = true;
 
         var mgr = FindFirstObjectByType<KillChainManager>();
-        if (mgr != null) mgr.NotifyKill();
+        if (mgr != null)
+        {
+            // Pass the enemy's world position directly
+            mgr.NotifyKillAt(transform.position);
+        }
     }
 }

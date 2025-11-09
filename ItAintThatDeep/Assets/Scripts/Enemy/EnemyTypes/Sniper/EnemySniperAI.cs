@@ -1,11 +1,11 @@
 using UnityEngine;
 
 /*
-Simple sniper AI:
-- Finds the player if not assigned (Camera.main fallback).
+Ranged enemy AI:
+- Finds the player if not assigned.
 - Faces the player on Y.
-- Moves until within sniperRange, then stops.
-- After engageWarmup, fires on cooldown toward the player's last known point.
+- Moves until within attackRange.
+- On entering range, waits engageWarmup, then fires projectiles on cooldown.
 - Notifies spriteState for advancing/engaging and plays follow-through pulse on shot.
 */
 public class EnemySniperAI : MonoBehaviour
@@ -13,23 +13,21 @@ public class EnemySniperAI : MonoBehaviour
     [Header("Target")]
     [SerializeField] private Transform player;
 
-    [Header("Sniper Behavior")]
-    [SerializeField] private float sniperRange = 60f;
+    [Header("Movement")]
     [SerializeField] private float moveSpeed = 3.5f;
     [SerializeField] private float turnSpeed = 720f;
 
-    [Header("Warm-up")]
+    [Header("Attack")]
+    [SerializeField] private float attackRange = 60f;
     [SerializeField] private float engageWarmup = 0.5f;
-    private float warmupUntil = 0f;
-
-    [Header("Firing")]
+    [SerializeField] private float fireCooldown = 1.25f;
     [SerializeField] private Transform muzzle;
     [SerializeField] private EnemyProjectile projectilePrefab;
-    [SerializeField] private float fireCooldown = 1.25f;
 
     [Header("Optional Visuals")]
     [SerializeField] private EnemySpriteStateController spriteState;
 
+    private float warmupUntil = 0f;
     private float nextFireTime = 0f;
     private Rigidbody rb;
 
@@ -40,50 +38,46 @@ public class EnemySniperAI : MonoBehaviour
 
     private void Update()
     {
-        if (EnsurePlayer() == false)
-        {
+        if (!EnsurePlayer())
             return;
-        }
 
         Vector3 toPlayer = player.position - transform.position;
         Vector3 flat = new Vector3(toPlayer.x, 0f, toPlayer.z);
-        float dist = toPlayer.magnitude;
+        float dist = flat.magnitude;
 
         Face(flat);
 
-        if (dist > sniperRange)
+        // Move toward player if too far
+        if (dist > attackRange)
         {
-            warmupUntil = 0f;
-
             if (spriteState != null) spriteState.ShowAdvancing();
+
+            warmupUntil = 0f;
 
             Vector3 step = flat.normalized * moveSpeed * Time.deltaTime;
             if (rb != null && rb.isKinematic == false)
-            {
                 rb.MovePosition(rb.position + step);
-            }
             else
-            {
-                transform.position = transform.position + step;
-            }
+                transform.position += step;
 
             return;
         }
 
+        // Begin warmup once within range
         if (warmupUntil == 0f)
-        {
             warmupUntil = Time.time + engageWarmup;
-        }
 
+        // Still warming up
         if (Time.time < warmupUntil)
         {
             if (spriteState != null) spriteState.ShowEngaging();
             return;
         }
 
+        // Fire on cooldown
         if (Time.time >= nextFireTime)
         {
-            Fire();
+            TryShoot();
             if (spriteState != null) spriteState.PulseAttackFollowThrough();
             nextFireTime = Time.time + fireCooldown;
         }
@@ -96,7 +90,12 @@ public class EnemySniperAI : MonoBehaviour
     private bool EnsurePlayer()
     {
         if (player != null)
+            return true;
+
+        var healthCtrl = FindFirstObjectByType<PlayerHealthController>();
+        if (healthCtrl != null)
         {
+            player = healthCtrl.transform;
             return true;
         }
 
@@ -112,28 +111,16 @@ public class EnemySniperAI : MonoBehaviour
     private void Face(Vector3 flatToPlayer)
     {
         if (flatToPlayer.sqrMagnitude <= 0.0001f)
-        {
             return;
-        }
 
         Quaternion target = Quaternion.LookRotation(flatToPlayer.normalized, Vector3.up);
         transform.rotation = Quaternion.RotateTowards(transform.rotation, target, turnSpeed * Time.deltaTime);
     }
 
-    private void Fire()
+    private void TryShoot()
     {
-        if (projectilePrefab == null)
-        {
+        if (projectilePrefab == null || muzzle == null || player == null)
             return;
-        }
-        if (muzzle == null)
-        {
-            return;
-        }
-        if (player == null)
-        {
-            return;
-        }
 
         Vector3 targetPoint = player.position;
         Vector3 dir = (targetPoint - muzzle.position).normalized;

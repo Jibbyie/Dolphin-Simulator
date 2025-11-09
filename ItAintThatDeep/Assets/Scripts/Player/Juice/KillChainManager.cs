@@ -1,54 +1,77 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-// Tracks kill streaks within a combo window.
-// Shows a small top-right label when a tier is reached and plays a one-shot SFX.
 public class KillChainManager : MonoBehaviour
 {
+    // Single kill event that always includes the world position
+    public static Action<Vector3> OnKill;
+
     [Header("UI")]
-    [SerializeField] private TextMeshProUGUI tierLabel; // Top-right label
+    [SerializeField] private TextMeshProUGUI tierLabel;
 
     [Header("Combo Window")]
     [SerializeField] private float comboWindowSeconds = 4f;
 
-    [Header("Tiers")]
-    [SerializeField] private int[] tierThresholds = new int[] { 3, 5, 8, 12 };
-    [SerializeField] private string[] tierNames = new string[] { "RAMPAGE", "UNSTOPPABLE", "MAYHEM", "GODLIKE" };
-    [SerializeField] private AudioClip[] tierSfx; // optional, same length as thresholds (or shorter)
+    [Header("Tiers (edit in Inspector)")]
+    [SerializeField] private List<int> tierThresholds = new List<int> { 3, 6, 10, 15 };
+    [SerializeField] private List<string> tierNames = new List<string> { "RAMPAGE", "UNSTOPPABLE", "MAYHEM", "GODLIKE" };
+    [SerializeField] private List<AudioClip> tierSfx = new List<AudioClip>();
 
     [Header("Audio")]
-    [SerializeField] private AudioSource audioSource; // optional; any AudioSource to play SFX
+    [SerializeField] private AudioSource audioSource;
+
+    [Header("Shake (higher tier = stronger)")]
+    [SerializeField] private float baseShake = 1.0f;
+    [SerializeField] private float shakePerTier = 0.75f;
+    [SerializeField] private float maxShake = 6.0f;
+
+    private RectTransform labelRT;
+    private Vector2 labelBasePos;
+    private bool basePosCaptured;
 
     private int streakCount;
     private float comboTimer;
-    private int tierIndex; // -1 means "not at a tier"
+    private int tierIndex = -1;
 
     private void Awake()
     {
         HideLabel();
         ResetChain();
+
+        if (tierLabel != null)
+        {
+            labelRT = tierLabel.rectTransform;
+            labelBasePos = labelRT.anchoredPosition;
+            basePosCaptured = true;
+        }
     }
 
     private void Update()
     {
-        if (streakCount <= 0) return;
-
-        comboTimer -= Time.deltaTime;
-        if (comboTimer <= 0f)
+        if (streakCount > 0)
         {
-            // Chain ended
-            ResetChain();
-            HideLabel();
+            comboTimer -= Time.deltaTime;
+            if (comboTimer <= 0f)
+            {
+                ResetChain();
+                HideLabel();
+                ApplyShake(true);
+                return;
+            }
         }
+
+        bool reset = (tierIndex < 0) || tierLabel == null || !tierLabel.gameObject.activeSelf;
+        ApplyShake(reset);
     }
 
-    // Called by EnemyKillNotifier on enemy death
-    public void NotifyKill()
+    // NEW: call this from EnemyKillNotifier, passing the enemy's world position
+    public void NotifyKillAt(Vector3 worldPos)
     {
         streakCount++;
         comboTimer = comboWindowSeconds;
 
-        // Check if we crossed a new tier
         int newTier = GetTierIndexFor(streakCount);
         if (newTier > tierIndex)
         {
@@ -56,24 +79,39 @@ public class KillChainManager : MonoBehaviour
             ShowTier(tierIndex);
             PlayTierSfx(tierIndex);
         }
+
+        // Fire single, ordered event with position (no race)
+        OnKill?.Invoke(worldPos);
     }
 
     private int GetTierIndexFor(int count)
     {
+        if (tierThresholds == null || tierThresholds.Count == 0) return -1;
         int idx = -1;
-        for (int i = 0; i < tierThresholds.Length; i++)
-        {
+        for (int i = 0; i < tierThresholds.Count; i++)
             if (count >= tierThresholds[i]) idx = i;
-        }
         return idx;
     }
 
     private void ShowTier(int index)
     {
         if (tierLabel == null) return;
-        if (index < 0 || index >= tierNames.Length) return;
 
-        tierLabel.text = tierNames[index];
+        string name = (tierNames != null && index >= 0 && index < tierNames.Count) ? tierNames[index] : string.Empty;
+        if (string.IsNullOrEmpty(name))
+        {
+            tierLabel.gameObject.SetActive(false);
+            return;
+        }
+
+        if (!basePosCaptured)
+        {
+            labelRT = tierLabel.rectTransform;
+            labelBasePos = labelRT.anchoredPosition;
+            basePosCaptured = true;
+        }
+
+        tierLabel.text = name;
         if (!tierLabel.gameObject.activeSelf) tierLabel.gameObject.SetActive(true);
     }
 
@@ -85,7 +123,7 @@ public class KillChainManager : MonoBehaviour
     private void PlayTierSfx(int index)
     {
         if (audioSource == null || tierSfx == null) return;
-        if (index < 0 || index >= tierSfx.Length) return;
+        if (index < 0 || index >= tierSfx.Count) return;
         var clip = tierSfx[index];
         if (clip != null) audioSource.PlayOneShot(clip);
     }
@@ -95,5 +133,20 @@ public class KillChainManager : MonoBehaviour
         streakCount = 0;
         comboTimer = 0f;
         tierIndex = -1;
+    }
+
+    public int CurrentTierIndex => tierIndex;
+    public int CurrentStreakCount => streakCount;
+    public int TierCount => tierThresholds != null ? tierThresholds.Count : 0;
+
+    private void ApplyShake(bool resetToBase)
+    {
+        if (labelRT == null || !basePosCaptured) return;
+        if (resetToBase) { labelRT.anchoredPosition = labelBasePos; return; }
+
+        int effectiveTier = Mathf.Max(0, tierIndex);
+        float amp = Mathf.Min(baseShake + shakePerTier * effectiveTier, maxShake);
+        Vector2 offset = UnityEngine.Random.insideUnitCircle * amp;
+        labelRT.anchoredPosition = labelBasePos + offset;
     }
 }

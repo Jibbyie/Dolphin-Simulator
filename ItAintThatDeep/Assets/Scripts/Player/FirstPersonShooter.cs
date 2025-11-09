@@ -20,6 +20,9 @@ public class FirstPersonShooter : MonoBehaviour
     [SerializeField] private float nextFireTimestamp = 0f;    // I enforce the fire rate cooldown
     [SerializeField] private bool isReloading = false;        // I prevent firing while reloading
 
+    public Camera FirstPersonCamera => firstPersonCamera;
+    public LayerMask HittableLayers => hittableLayers;
+
     // I remember ammo counts per weapon to restore when switching
     private struct AmmoState { public int magazine; public int reserve; }
     private readonly Dictionary<WeaponData, AmmoState> ammoStatesByWeapon = new();
@@ -40,9 +43,8 @@ public class FirstPersonShooter : MonoBehaviour
         WeaponManager.OnWeaponSwitched -= HandleWeaponSwitched;
     }
 
-    private void Update()
+    private void LateUpdate()
     {
-        // I only process input when in first-person and a weapon is equipped
         if (WeaponManager.CurrentWeapon == null)
             return;
 

@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f05f2b8ef85f53c45aae276ce1dd7a3c, type: 3}
   m_Name: AR15
   m_EditorClassIdentifier: 
-  weaponIcon: {fileID: 21300000, guid: ee4de373e2a7a3f458725a2d9eafe869, type: 3}
+  weaponIcon: {fileID: 21300000, guid: 7e6a56eae05effc4eb0104881d8a76bd, type: 3}
   weaponName: AR-Fin-Teen
   weaponType: 3
   damageType: 3
   damage: 7.5
   shootSFX: {fileID: 8300000, guid: 971f6f5b9a7dd1746b6fdff69ec05b59, type: 3}
   sphereCastRadius: 0
-  range: 20
+  range: 40
   fireRate: 10
   reloadTime: 1
   magazineSize: 30

@@ -1,40 +1,86 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Rigidbody), typeof(Collider))]
 public class FirstPersonController : MonoBehaviour
 {
-    [Header("Player Movement Settings")]
-    [SerializeField] private float moveSpeed = 5f;
+    [Header("Movement")]
+    [SerializeField] float moveSpeed = 7f;
 
     [Header("Sprint")]
-    [SerializeField] private KeyCode sprintKey = KeyCode.LeftShift;
-    [SerializeField] private float sprintMultiplier = 1.6f;
+    [SerializeField] KeyCode sprintKey = KeyCode.LeftShift;
+    [SerializeField] float sprintMultiplier = 1.6f;
 
-    private Rigidbody rb;
+    [Header("Super Jump")]
+    [SerializeField] KeyCode jumpKey = KeyCode.F;
+    [SerializeField] float superJumpImpulse = 12f;
 
-    // Simple global read so other scripts (bob/shake) can react to sprint
+    [Header("Ground Check")]
+    // Reuse one float instead of many knobs: acts as the feet sphere radius.
+    [SerializeField] float groundCheckRadius = 0.25f;
+    // Start with Everything; once it works, narrow to your Ground layer in the Inspector.
+    [SerializeField] LayerMask groundMask = ~0;
+
+    Rigidbody rb;
+    Collider col;
+
+    bool jumpPressed;
     public static bool IsSprinting { get; private set; }
+    public static bool IsGroundedNow { get; private set; }
 
-    private void Start()
+    void Start()
     {
         rb = GetComponent<Rigidbody>();
+        col = GetComponent<Collider>();
         rb.freezeRotation = true;
     }
 
-    private void FixedUpdate()
+    void Update()
     {
+        // Read input in Update (reliable timing)
+        IsSprinting = Input.GetKey(sprintKey);
+        if (Input.GetKeyDown(jumpKey))
+            jumpPressed = true;
+    }
+
+    void FixedUpdate()
+    {
+        // 1) Cache grounded ONCE at the start of physics step
+        bool grounded = IsGrounded();
+        IsGroundedNow = grounded;
+
+        // 2) Movement (horizontal only; never stomp Y)
         float moveX = Input.GetAxisRaw("Horizontal");
         float moveZ = Input.GetAxisRaw("Vertical");
-
-        Vector3 moveDir = transform.forward * moveZ + transform.right * moveX;
-        moveDir.Normalize();
-
-        // Sprint only when there is movement input
-        bool wantsSprint = Input.GetKey(sprintKey);
-        bool hasInput = Mathf.Abs(moveX) + Mathf.Abs(moveZ) > 0.01f;
-        IsSprinting = wantsSprint && hasInput;
+        Vector3 moveDir = (transform.forward * moveZ + transform.right * moveX).normalized;
 
         float speed = moveSpeed * (IsSprinting ? sprintMultiplier : 1f);
-        rb.MovePosition(rb.position + moveDir * speed * Time.fixedDeltaTime);
+        Vector3 v = rb.linearVelocity;
+        v.x = moveDir.x * speed;
+        v.z = moveDir.z * speed;
+        rb.linearVelocity = v;
+
+        // 3) Super jump: simple and strict
+        if (jumpPressed && IsSprinting && grounded)
+        {
+            // clear any downward drift before we boost
+            v = rb.linearVelocity;
+            if (v.y < 0f) v.y = 0f;
+            rb.linearVelocity = v;
+
+            rb.AddForce(Vector3.up * superJumpImpulse, ForceMode.VelocityChange);
+            // Debug.Log("Super jump!"); // optional
+        }
+
+        jumpPressed = false; // consume this physics tick
+    }
+
+    bool IsGrounded()
+    {
+        // Feet = collider bottom, slightly inside the body
+        Bounds b = col.bounds;
+        Vector3 feet = new Vector3(b.center.x, b.min.y + 0.05f, b.center.z);
+
+        // Forgiving overlap so slopes/steps count
+        return Physics.CheckSphere(feet, groundCheckRadius, groundMask, QueryTriggerInteraction.Ignore);
     }
 }
