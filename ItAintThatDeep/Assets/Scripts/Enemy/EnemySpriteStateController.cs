@@ -1,23 +1,6 @@
 using System.Collections;
 using UnityEngine;
 
-/*
-Controls enemy 2D sprite visuals with normal and low-HP variants.
-
-States:
-- Advancing: two-frame walk flipbook at walkFps
-- Engaging: single "ready/charge" sprite
-
-Temporary pulses:
-- Attack follow-through pulse
-- Hit pulse
-
-Low-HP variants:
-- Two advancing frames
-- One engaging frame
-- One attack follow-through frame
-- One hit frame
-*/
 [RequireComponent(typeof(SpriteRenderer))]
 public class EnemySpriteStateController : MonoBehaviour
 {
@@ -55,9 +38,7 @@ public class EnemySpriteStateController : MonoBehaviour
     [SerializeField] private float hitPulseSeconds = 0.10f;
 
     [Header("Low-HP Threshold")]
-    [SerializeField]
-    [Tooltip("Below this fraction, use the low-HP sprites")]
-    private float lowHealthThreshold = 0.40f;
+    [SerializeField] private float lowHealthThreshold = 0.40f;
 
     private State state = State.Advancing;
     private PulseType pulse = PulseType.None;
@@ -70,9 +51,7 @@ public class EnemySpriteStateController : MonoBehaviour
     private void Awake()
     {
         if (spriteRenderer == null)
-        {
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-        }
 
         damageReceiver = GetComponent<DamageReciever>();
     }
@@ -80,9 +59,7 @@ public class EnemySpriteStateController : MonoBehaviour
     private void OnEnable()
     {
         if (damageReceiver != null)
-        {
             damageReceiver.onHit.AddListener(OnHit);
-        }
 
         ApplyBaseState();
     }
@@ -90,87 +67,43 @@ public class EnemySpriteStateController : MonoBehaviour
     private void OnDisable()
     {
         if (damageReceiver != null)
-        {
             damageReceiver.onHit.RemoveListener(OnHit);
-        }
 
         StopAllCoroutines();
         pulseRoutine = null;
         walkRoutine = null;
     }
 
-    // Called by AI when moving toward the player
-    public void ShowAdvancing()
-    {
-        SetState(State.Advancing);
-    }
+    public void ShowAdvancing() { SetState(State.Advancing); }
+    public void ShowEngaging() { SetState(State.Engaging); }
+    public void PulseAttackFollowThrough() { StartPulse(PulseType.Attack, attackPulseSeconds); }
 
-    // Called by AI when in melee range but waiting to attack
-    public void ShowEngaging()
-    {
-        SetState(State.Engaging);
-    }
-
-    // Called by AI right when a punch happens (brief pulse)
-    public void PulseAttackFollowThrough()
-    {
-        StartPulse(PulseType.Attack, attackPulseSeconds);
-    }
-
-    private void OnHit(float damage, WeaponData.DamageType type)
-    {
-        StartPulse(PulseType.Hit, hitPulseSeconds);
-    }
+    private void OnHit(float dmg, WeaponData.DamageType type) { StartPulse(PulseType.Hit, hitPulseSeconds); }
 
     private void SetState(State next)
     {
         state = next;
-
-        if (IsPulsing() == true)
-        {
-            return;
-        }
-
+        if (IsPulsing()) return;
         ApplyBaseState();
     }
 
     private void ApplyBaseState()
     {
-        if (state == State.Advancing)
-        {
-            StartWalking();
-        }
-        else
-        {
-            ShowEngagingIdle();
-        }
+        if (state == State.Advancing) StartWalking();
+        else ShowEngagingIdle();
     }
 
-    private bool IsPulsing()
-    {
-        if (pulse == PulseType.None)
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-    }
+    private bool IsPulsing() { return pulse != PulseType.None; }
 
     private void StartPulse(PulseType pulseType, float seconds)
     {
         if (pulseRoutine != null)
-        {
             StopCoroutine(pulseRoutine);
-        }
 
         pulse = pulseType;
 
         StopWalking();
-
-        Sprite frame = SelectPulseSprite(pulseType);
-        SetSprite(frame);
+        SetSprite(SelectPulseSprite(pulseType));
 
         pulseRoutine = StartCoroutine(PulseTimer(seconds));
     }
@@ -178,10 +111,8 @@ public class EnemySpriteStateController : MonoBehaviour
     private IEnumerator PulseTimer(float seconds)
     {
         yield return new WaitForSeconds(seconds);
-
         pulse = PulseType.None;
         pulseRoutine = null;
-
         ApplyBaseState();
     }
 
@@ -190,101 +121,42 @@ public class EnemySpriteStateController : MonoBehaviour
         bool lowHp = IsLowHp();
 
         if (pulseType == PulseType.Attack)
-        {
-            if (lowHp == true)
-            {
-                if (lowAttackFollowThroughFrame != null)
-                {
-                    return lowAttackFollowThroughFrame;
-                }
-            }
-
-            return attackFollowThroughFrame;
-        }
+            return lowHp ? lowAttackFollowThroughFrame : attackFollowThroughFrame;
 
         if (pulseType == PulseType.Hit)
-        {
-            if (lowHp == true)
-            {
-                if (lowHitFrame != null)
-                {
-                    return lowHitFrame;
-                }
-            }
-
-            return hitFrame;
-        }
+            return lowHp ? lowHitFrame : hitFrame;
 
         return null;
     }
 
     private void StartWalking()
     {
-        if (walkRoutine != null)
-        {
-            return;
-        }
-
+        if (walkRoutine != null) return;
         walkRoutine = StartCoroutine(WalkFlipbook());
     }
 
     private void StopWalking()
     {
-        if (walkRoutine == null)
-        {
-            return;
-        }
-
+        if (walkRoutine == null) return;
         StopCoroutine(walkRoutine);
         walkRoutine = null;
     }
 
     private IEnumerator WalkFlipbook()
     {
-        float interval;
-        if (walkFps > 0f)
-        {
-            interval = 1f / walkFps;
-        }
-        else
-        {
-            interval = 0.125f;
-        }
-
+        float interval = walkFps > 0f ? 1f / walkFps : 0.125f;
         WaitForSeconds wait = new WaitForSeconds(interval);
 
         bool useB = false;
 
         while (true)
         {
-            Sprite frameA = walkFrameA;
-            Sprite frameB = walkFrameB;
+            bool low = IsLowHp();
+            Sprite frameA = low ? lowWalkFrameA : walkFrameA;
+            Sprite frameB = low ? lowWalkFrameB : walkFrameB;
 
-            bool lowHp = IsLowHp();
-
-            if (lowHp == true)
-            {
-                if (lowWalkFrameA != null)
-                {
-                    frameA = lowWalkFrameA;
-                }
-                if (lowWalkFrameB != null)
-                {
-                    frameB = lowWalkFrameB;
-                }
-            }
-
-            if (useB == true)
-            {
-                SetSprite(frameB);
-            }
-            else
-            {
-                SetSprite(frameA);
-            }
-
+            SetSprite(useB ? frameB : frameA);
             useB = !useB;
-
             yield return wait;
         }
     }
@@ -292,56 +164,29 @@ public class EnemySpriteStateController : MonoBehaviour
     private void ShowEngagingIdle()
     {
         StopWalking();
-
-        bool lowHp = IsLowHp();
-
-        if (lowHp == true)
-        {
-            if (lowEngagingFrame != null)
-            {
-                SetSprite(lowEngagingFrame);
-                return;
-            }
-        }
-
-        SetSprite(engagingFrame);
+        bool low = IsLowHp();
+        SetSprite(low ? lowEngagingFrame : engagingFrame);
     }
 
     private void SetSprite(Sprite frame)
     {
-        if (spriteRenderer != null)
-        {
-            if (frame != null)
-            {
-                spriteRenderer.sprite = frame;
-            }
-        }
+        if (spriteRenderer != null && frame != null)
+            spriteRenderer.sprite = frame;
     }
 
     private bool IsLowHp()
     {
-        float fraction = GetHealthFractionSafe();
-
-        if (fraction < lowHealthThreshold)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        if (damageReceiver == null) return false;
+        return damageReceiver.GetHealthFraction() < lowHealthThreshold;
     }
 
-    private float GetHealthFractionSafe()
+    public void ShowSingleFrame(Sprite frame)
     {
-        if (damageReceiver == null)
-        {
-            return 1f;
-        }
-
-        float value = damageReceiver.GetHealthFraction();
-        if (value < 0f) value = 0f;
-        if (value > 1f) value = 1f;
-        return value;
+        StopAllCoroutines();
+        pulse = PulseType.None;
+        walkRoutine = null;
+        pulseRoutine = null;
+        state = State.Engaging;
+        SetSprite(frame);
     }
 }

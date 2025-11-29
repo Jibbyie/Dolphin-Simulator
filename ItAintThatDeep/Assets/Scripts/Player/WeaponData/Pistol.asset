@@ -16,8 +16,10 @@ MonoBehaviour:
   weaponName: Colt Swimmer .45
   weaponType: 2
   damageType: 2
-  damage: 10
+  damage: 35
   shootSFX: {fileID: 8300000, guid: 971f6f5b9a7dd1746b6fdff69ec05b59, type: 3}
+  knockbackForce: 0.5
+  hitStunDuration: 0.3
   sphereCastRadius: 0
   range: 25
   fireRate: 2

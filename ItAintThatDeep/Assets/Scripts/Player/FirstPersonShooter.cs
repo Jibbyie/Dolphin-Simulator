@@ -30,8 +30,10 @@ public class FirstPersonShooter : MonoBehaviour
     // I signal to UI that a shot has successfully fired
     public static event Action OnWeaponFired;
 
+
     private void Start()
     {
+
         // I listen for weapon switches to seed or restore ammo
         WeaponManager.OnWeaponSwitched += HandleWeaponSwitched;
         if (WeaponManager.CurrentWeapon != null)
@@ -43,7 +45,7 @@ public class FirstPersonShooter : MonoBehaviour
         WeaponManager.OnWeaponSwitched -= HandleWeaponSwitched;
     }
 
-    private void LateUpdate()
+    private void Update()
     {
         if (WeaponManager.CurrentWeapon == null)
             return;
@@ -247,6 +249,23 @@ public class FirstPersonShooter : MonoBehaviour
         }
 
         nextFireTimestamp = 0f;
+    }
+
+    public void AddReserveAmmoToWeapon(WeaponData weapon, int amount)
+    {
+        if (!ammoStatesByWeapon.TryGetValue(weapon, out var state))
+        {
+            // Weapon not used yet — do NOT seed magazine on pickup.
+            // Only seed reserve based on weapon.clipSize.
+            state.magazine = weapon.magazineSize;
+            state.reserve = weapon.clipSize;
+        }
+
+        state.reserve += amount;
+        ammoStatesByWeapon[weapon] = state;
+
+        if (WeaponManager.CurrentWeapon == weapon)
+            reserveAmmoCount = state.reserve;
     }
 
     // I define what counts as a ranged weapon in one central place

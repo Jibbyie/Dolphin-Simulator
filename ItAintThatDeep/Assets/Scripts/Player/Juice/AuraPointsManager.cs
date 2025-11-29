@@ -1,7 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 public class AuraPointsManager : MonoBehaviour
 {
@@ -45,7 +46,8 @@ public class AuraPointsManager : MonoBehaviour
         totalPoints += added;
         UpdateLabel();
 
-        OnPointsAdded?.Invoke(added, worldPos);
+        StartCoroutine(DelayedPointsEvent(added, worldPos));
+
     }
 
     private void UpdateLabel()
@@ -67,18 +69,25 @@ public class AuraPointsManager : MonoBehaviour
         mgr.totalPoints += Mathf.Max(0, amount);
         mgr.UpdateLabel();
 
-        // Tell floaters to show the bonus. If you want a custom label, prefix it.
+        // Tell floaters to show the bonus.
         int shown = Mathf.Max(0, amount);
         if (!string.IsNullOrEmpty(label))
         {
-            // Show "TRICKSHOT +50" (or your label) via one combined string:
+            // Show "TRICKSHOT +50" 
             AuraFloaterUI.SpawnStatic(worldPos, label + " +" + shown);
         }
         else
         {
-            // Fall back to normal points-added event if you prefer:
+            // Fall back to normal points-added event 
             if (OnPointsAdded != null) OnPointsAdded.Invoke(shown, worldPos);
         }
     }
+
+    private IEnumerator DelayedPointsEvent(int added, Vector3 worldPos)
+    {
+        yield return null; // wait one frame so UI Awake/OnEnable happens
+        OnPointsAdded?.Invoke(added, worldPos);
+    }
+
 
 }

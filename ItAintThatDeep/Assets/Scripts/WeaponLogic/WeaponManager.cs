@@ -11,6 +11,8 @@ public class WeaponManager : MonoBehaviour
 
     // I notify subscribers when the player switches weapons
     public static event Action<WeaponData> OnWeaponSwitched;
+    public List<WeaponData> GetAllWeapons() => weaponInventory;
+
 
     [Header("Audio on Weapon Switch")]
     [SerializeField] private AudioSource switchAudioSource;    // I play the equip sound here

@@ -5,63 +5,124 @@ using System.Collections.Generic;
 public class EnemySpawner : MonoBehaviour
 {
     [Header("Spawn Settings")]
-    [SerializeField] GameObject[] enemyPrefabs;   // assign all enemy prefabs here
-    [SerializeField] int spawnCount = 10;         // total enemies to spawn
-    [SerializeField] float spawnDelay = 1f;       // delay between each spawn
-    [SerializeField] Vector2 spawnAreaSize = new Vector2(20f, 20f);
-    [SerializeField] float minSpawnDistance = 2f; // spacing between enemies
-    [SerializeField] float spawnHeight = 0f;
+    [SerializeField] private GameObject[] enemyPrefabs;
+
+    [Tooltip("Maximum enemies alive at once.")]
+    [SerializeField] private int maxConcurrentEnemies = 5;
+
+    [Tooltip("Total enemies allowed to be spawned over time.")]
+    [SerializeField] private int totalSpawnBudget = 20;
+
+    [SerializeField] private float spawnDelay = 1f;
+    [SerializeField] private Vector2 spawnAreaSize = new Vector2(20f, 20f);
+    [SerializeField] private float minSpawnDistance = 2f;
+    [SerializeField] private float spawnHeight = 0f;
 
     [Header("Debug")]
-    [SerializeField] bool drawGizmos = true;
+    [SerializeField] private bool drawGizmos = true;
 
-    readonly List<Vector3> usedPositions = new();
+    private readonly List<Vector3> usedPositions = new();
+    private readonly HashSet<GameObject> activeEnemies = new();
 
-    void Start()
+    private int totalSpawned = 0;
+    private bool spawning = false;
+
+    private void Start()
     {
-        StartCoroutine(SpawnEnemiesSequentially());
+        StartCoroutine(SpawnerLoop());
     }
 
-    IEnumerator SpawnEnemiesSequentially()
+    private IEnumerator SpawnerLoop()
     {
-        if (enemyPrefabs == null || enemyPrefabs.Length == 0)
+        spawning = true;
+
+        while (totalSpawned < totalSpawnBudget)
         {
-            Debug.LogWarning("No enemy prefabs assigned to EnemySpawner.");
-            yield break;
-        }
+            // Wait until we are below the max allowed enemies
+            while (activeEnemies.Count >= maxConcurrentEnemies)
+            {
+                yield return null;
+            }
 
-        int spawned = 0;
-        int attempts = 0;
-        int maxAttempts = spawnCount * 10;
-
-        while (spawned < spawnCount && attempts < maxAttempts)
-        {
-            attempts++;
-
-            Vector3 candidate = GetRandomPosition();
-            if (!IsPositionValid(candidate))
-                continue;
-
-            GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
-            Instantiate(prefab, candidate, Quaternion.identity);
-            usedPositions.Add(candidate);
-            spawned++;
+            // Attempt a spawn
+            TrySpawnOne();
 
             yield return new WaitForSeconds(spawnDelay);
         }
 
-        if (spawned < spawnCount)
-            Debug.LogWarning($"Only spawned {spawned}/{spawnCount} enemies (not enough space).");
+        spawning = false;
     }
 
-    Vector3 GetRandomPosition()
+    private void TrySpawnOne()
+    {
+        if (enemyPrefabs == null || enemyPrefabs.Length == 0)
+        {
+            Debug.LogWarning("No enemy prefabs assigned to EnemySpawner.");
+            return;
+        }
+
+        if (totalSpawned >= totalSpawnBudget)
+            return;
+
+        // Find a valid position
+        const int maxAttempts = 15;
+        Vector3 candidate = Vector3.zero;
+        bool valid = false;
+
+        for (int i = 0; i < maxAttempts; i++)
+        {
+            candidate = GetRandomPosition();
+            if (IsPositionValid(candidate))
+            {
+                valid = true;
+                break;
+            }
+        }
+
+        if (!valid)
+        {
+            Debug.LogWarning("EnemySpawner: Could not find valid spawn position.");
+            return;
+        }
+
+        // Spawn
+        GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+        GameObject enemy = Instantiate(prefab, candidate, Quaternion.identity);
+
+        totalSpawned++;
+        usedPositions.Add(candidate);
+        activeEnemies.Add(enemy);
+
+        // Track when enemy dies
+        var dr = enemy.GetComponent<DamageReciever>();
+        if (dr != null)
+        {
+            dr.onDeath.AddListener(() =>
+            {
+                activeEnemies.Remove(enemy);
+            });
+        }
+        else
+        {
+            // fallback: auto-remove after destroy
+            StartCoroutine(RemoveOnDestroy(enemy));
+        }
+    }
+
+    private IEnumerator RemoveOnDestroy(GameObject enemy)
+    {
+        yield return new WaitUntil(() => enemy == null);
+        activeEnemies.Remove(enemy);
+    }
+
+    private Vector3 GetRandomPosition()
     {
         float x = Random.Range(-spawnAreaSize.x / 2f, spawnAreaSize.x / 2f);
         float z = Random.Range(-spawnAreaSize.y / 2f, spawnAreaSize.y / 2f);
         return new Vector3(transform.position.x + x, spawnHeight, transform.position.z + z);
     }
 
-    bool IsPositionValid(Vector3 pos)
+    private bool IsPositionValid(Vector3 pos)
     {
         for (int i = 0; i < usedPositions.Count; i++)
         {
@@ -71,7 +132,7 @@ public class EnemySpawner : MonoBehaviour
         return true;
     }
 
-    void OnDrawGizmosSelected()
+    private void OnDrawGizmosSelected()
     {
         if (!drawGizmos) return;
 

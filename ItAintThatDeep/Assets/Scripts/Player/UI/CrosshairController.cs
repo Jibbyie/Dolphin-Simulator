@@ -54,7 +54,7 @@ public class CrosshairController : MonoBehaviour
         ApplySpriteForWeapon(null); // apply default sprite at start
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         var weapon = WeaponManager.CurrentWeapon; // current equipped weapon
         if (reticle == null)
@@ -81,16 +81,12 @@ public class CrosshairController : MonoBehaviour
         // Update sprite based on weapon
         ApplySpriteForWeapon(weapon);
 
-        // If you want the reticle to go "blocked" while reloading or out of ammo,
-        // uncomment this block (cosmetic only; shooting logic still unchanged).
-        /*
         if (WeaponStateTracker.CurrentWeaponState == WeaponStateTracker.WeaponState.Reloading ||
             WeaponStateTracker.CurrentWeaponState == WeaponStateTracker.WeaponState.OutOfAmmo)
         {
             SetReticleColor(blockedColor);
             return;
         }
-        */
 
         bool wouldDealDamage = WouldDealDamageNow(weapon);
 

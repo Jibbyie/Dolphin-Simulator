@@ -1,12 +1,13 @@
-using UnityEngine;
-using UnityEngine.UI;
 using System.Collections;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(DamageReciever))]
 public class PlayerHealthController : MonoBehaviour
 {
     [Header("HP Bar Sprites")]
-    [SerializeField] private Image hpBarImage;      // The image to update
+    [SerializeField] private Image hpBarImage;      
     [SerializeField] private Sprite[] hpSprites;    // 11 sprites, 0 = empty, 10 = full
 
     [Header("Hit Overlay")]
@@ -78,8 +79,25 @@ public class PlayerHealthController : MonoBehaviour
         hitOverlayCoroutine = null;
     }
 
+    public void Heal(float amount)
+    {
+        if (damageReceiver == null) return;
+
+        // clamp heal
+        float newHealth = Mathf.Min(damageReceiver.CurrentHealth + amount, damageReceiver.MaxHealth);
+
+        // apply
+        typeof(DamageReciever)
+            .GetField("currentHealth", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .SetValue(damageReceiver, newHealth);
+
+        UpdateHpBarSprite();
+    }
+
+
     void HandleDeathEvent()
     {
         UpdateHpBarSprite();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

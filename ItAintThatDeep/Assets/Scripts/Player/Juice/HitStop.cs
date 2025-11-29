@@ -10,9 +10,9 @@ public class HitStop : MonoBehaviour
     private static bool isBusy;
 
     /*
-    Triggers a brief pause. Default is 0.04 seconds (real time).
+    Triggers a brief pause. Default is 0.02 seconds (real time).
     */
-    public static void Do(float time = 0.04f)
+    public static void Do(float time = 0.001f)
     {
         if (isBusy == true)
         {

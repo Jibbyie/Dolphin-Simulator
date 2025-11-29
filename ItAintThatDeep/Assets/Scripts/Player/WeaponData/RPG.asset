@@ -16,8 +16,10 @@ MonoBehaviour:
   weaponName: RPG
   weaponType: 4
   damageType: 4
-  damage: 50
+  damage: 100
   shootSFX: {fileID: 8300000, guid: 4668a6e2cacdd904198a0745483f6a18, type: 3}
+  knockbackForce: 12
+  hitStunDuration: 2
   sphereCastRadius: 2
   range: 100
   fireRate: 0.5

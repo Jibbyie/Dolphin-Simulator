@@ -25,7 +25,7 @@ public class EnemyBillboard : MonoBehaviour
         // Cache camera once; avoids repeated Camera.main lookups.
         if (target == null && Camera.main != null)
         {
-            target = Camera.main.transform;
+            target = FindFirstObjectByType<PlayerHealthController>().transform;
         }
 
         // Spawn minimap marker if prefab assigned.
@@ -34,7 +34,7 @@ public class EnemyBillboard : MonoBehaviour
             GameObject marker = Instantiate(minimapPrefab);
             markerInstance = marker.transform;
 
-            marker.layer = LayerMask.NameToLayer("Minimap");
+            marker.layer = LayerMask.NameToLayer("MiniMap");
 
             marker.name = $"{gameObject.name}_Marker";
         }

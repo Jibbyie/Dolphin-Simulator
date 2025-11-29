@@ -16,7 +16,7 @@ TagManager:
   - UI
   - Ground
   - MiniMap
-  - 
+  - Canvas
   - 
   - 
   - 
@@ -43,6 +43,9 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Canvas
+    uniqueID: 739715133
     locked: 0
   m_RenderingLayers:
   - Default

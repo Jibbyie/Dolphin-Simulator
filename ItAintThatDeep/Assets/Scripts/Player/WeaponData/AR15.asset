@@ -16,8 +16,10 @@ MonoBehaviour:
   weaponName: AR-Fin-Teen
   weaponType: 3
   damageType: 3
-  damage: 7.5
+  damage: 15
   shootSFX: {fileID: 8300000, guid: 971f6f5b9a7dd1746b6fdff69ec05b59, type: 3}
+  knockbackForce: 0.5
+  hitStunDuration: 0.02
   sphereCastRadius: 0
   range: 40
   fireRate: 10

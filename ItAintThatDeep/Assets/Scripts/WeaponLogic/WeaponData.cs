@@ -14,7 +14,7 @@ public class WeaponData : ScriptableObject
         Rifle,
         RPG
     }
-  
+
     public enum DamageType
     {
         Slap,
@@ -34,18 +34,25 @@ public class WeaponData : ScriptableObject
     public float damage;
     public AudioClip shootSFX;
 
+    [Header("Hit Reaction")]
+    [Tooltip("Force applied to enemies when hit. Higher = more knockback.")]
+    public float knockbackForce = 6f;
+
+    [Tooltip("How long enemies are stunned after being hit.")]
+    public float hitStunDuration = 0.15f;
+
     [Header("RPG Settings (only used for WeaponType.RPG)")]
     [Tooltip("Radius of the sphere cast for RPG splash damage")]
     public float sphereCastRadius = 5f;
 
     [Header("Distance and Rate/Reload Settings")]
     public float range = 5f;
-    public float fireRate = 1f; 
+    public float fireRate = 1f;
     public float reloadTime = 2f;
 
     [Header("Ammo Settings")]
-    public int magazineSize; // bullets per magazine
-    public int clipSize; // reserve bullets in the clip
+    public int magazineSize;
+    public int clipSize;
 
     [Header("Audio Settings")]
     [Tooltip("Play this when the player equips this weapon")]
@@ -56,5 +63,4 @@ public class WeaponData : ScriptableObject
 
     [Tooltip("Play this when the clip is empty")]
     public AudioClip emptySFX;
-
 }

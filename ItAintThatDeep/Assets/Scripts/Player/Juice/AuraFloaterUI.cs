@@ -107,9 +107,15 @@ public class AuraFloaterUI : MonoBehaviour
     {
         if (playerCamera == null) return Vector2.zero;
         Vector3 screen = playerCamera.WorldToScreenPoint(world);
+
+        // if behind camera, force onto screen center so floater ALWAYS appears
+        if (screen.z < 0f)
+            screen = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+
         RectTransformUtility.ScreenPointToLocalPointInRectangle(container, screen, null, out var local);
         return local;
     }
+
 
     private IEnumerator Life(RectTransform rt, TextMeshProUGUI tmp, float life, float fade, Vector2 driftPixels)
     {
